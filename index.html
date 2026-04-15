@@ -3,113 +3,258 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PureDisplay - Parts Importer</title>
+    <title>PureDisplay - Parts Manager</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-
+    
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
-        h2 { color: #1a73e8; margin-bottom: 0.5rem; }
-        p { color: #5f6368; font-size: 0.9rem; margin-bottom: 2rem; }
-        .upload-area { border: 2px dashed #dadce0; padding: 2rem; border-radius: 8px; margin-bottom: 1.5rem; transition: border 0.3s; }
-        .upload-area:hover { border-color: #1a73e8; }
-        input[type="file"] { margin-bottom: 1rem; }
-        button { background-color: #1a73e8; color: white; border: none; padding: 0.8rem 2rem; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; width: 100%; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
-        #log { margin-top: 1.5rem; text-align: left; background: #202124; color: #00ff00; padding: 1rem; border-radius: 6px; font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; max-height: 200px; overflow-y: auto; }
-        .error { color: #ea4335; font-weight: bold; }
+        :root {
+            --sidebar-width: 260px;
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --text-light: #ecf0f1;
+            --bg-color: #f4f7f6;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg-color); height: 100vh; overflow: hidden; }
+        .hidden { display: none !important; }
+
+        /* LOGIN SCREEN */
+        #auth-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #2c3e50; display: flex; align-items: center; justify-content: center; z-index: 9999;
+        }
+        .login-card {
+            background: white; padding: 40px; border-radius: 12px; width: 350px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center;
+        }
+        .login-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
+        .login-card button { width: 100%; padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        
+        /* APP LAYOUT */
+        #app-shell { display: flex; height: 100vh; width: 100%; }
+        
+        .sidebar { width: var(--sidebar-width); background: var(--primary-color); color: var(--text-light); display: flex; flex-direction: column; }
+        .sidebar h2 { padding: 25px 20px; text-align: center; color: var(--accent-color); margin: 0; border-bottom: 1px solid #34495e; }
+        
+        .menu-label { padding: 20px 25px 5px; font-size: 0.7rem; text-transform: uppercase; color: #7f8c8d; }
+        .menu-item { padding: 12px 25px; cursor: pointer; border-left: 4px solid transparent; transition: 0.2s; color: #bdc3c7; }
+        .menu-item:hover { background: #34495e; color: white; }
+        .menu-item.active { background: #34495e; border-left-color: var(--accent-color); color: white; }
+
+        .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; }
+        .content-page { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); min-height: 400px; }
+
+        /* Custom Styles for Search & Admin */
+        #import-status { margin-top: 20px; font-family: monospace; font-size: 0.85rem; max-height: 200px; overflow-y: auto; background: #eee; padding: 10px; border-radius: 4px; }
+        .search-card { margin-top: 20px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>PureDisplay - Parts</h2>
-    <p>Stammdaten-Import in die Cloud-Datenbank</p>
-    
-    <div class="upload-area">
-        <input type="file" id="csvFile" accept=".csv">
+    <div id="auth-screen">
+        <div class="login-card">
+            <h2 style="color: #3498db; margin: 0;">PureDisplay</h2>
+            <p style="margin-bottom: 25px; color: #7f8c8d;">Parts Importer & Inventory</p>
+            
+            <input type="text" id="login-tenant" placeholder="Kundenschlüssel (z.B. HRF)">
+            <input type="email" id="login-email" placeholder="E-Mail">
+            <input type="password" id="login-pass" placeholder="Passwort">
+            
+            <button onclick="handleLogin()">Einloggen</button>
+            <p id="error-msg" style="color: #e74c3c; font-size: 0.85rem; margin-top: 15px;"></p>
+        </div>
     </div>
 
-    <button id="importBtn" onclick="startImport()">Import starten</button>
-    
-    <div id="log">Bereit... Warte auf Datei.</div>
-</div>
+    <div id="app-shell" class="hidden">
+        <nav class="sidebar">
+            <h2 id="display-tenant">PureDisplay</h2>
+            
+            <span class="menu-label">Teileinformationen</span>
+            <div id="menu-search" class="menu-item active" onclick="showPage('search', this)">Suche</div>
 
-<script>
-    // DEINE KONFIGURATION (puredisplay-66e76)
-    const firebaseConfig = {
-        apiKey: "AIzaSyDWXj3UpPlqvIZx80VqE7JPGSTqJgRY-0E",
-        authDomain: "puredisplay-66e76.firebaseapp.com",
-        projectId: "puredisplay-66e76",
-        storageBucket: "puredisplay-66e76.firebasestorage.app",
-        messagingSenderId: "204186912930",
-        appId: "1:204186912930:web:1b35bd0c69036771aceffb"
-    };
+            <span class="menu-label">Lagerverwaltung</span>
+            <div id="menu-stock" class="menu-item" onclick="showPage('stock', this)">Bestand ein/ausbuchen</div>
+            <div id="menu-order" class="menu-item" onclick="showPage('order', this)">Bestandsabgleich</div>
 
-    // Firebase Initialisierung
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+            <span class="menu-label">Administration</span>
+            <div id="menu-admin" class="menu-item" onclick="showPage('admin', this)">Stammdaten-Update</div>
+            
+            <div style="margin-top: auto; padding: 20px; border-top: 1px solid #34495e;">
+                <p style="font-size: 0.7rem; color: #7f8c8d; margin-bottom: 10px;">Build: 2026.04.14-Alpha</p>
+                <button onclick="logout()" style="width:100%; background: #c0392b; color: white; border:none; padding: 8px; border-radius: 4px; cursor:pointer;">Abmelden</button>
+            </div>
+        </nav>
 
-    async function startImport() {
-        const fileInput = document.getElementById('csvFile');
-        const log = document.getElementById('log');
-        const btn = document.getElementById('importBtn');
-        
-        if (!fileInput.files[0]) {
-            alert("Bitte wähle zuerst die CSV-Datei aus!");
-            return;
+        <main class="main-content">
+            <div id="page-search" class="content-page">
+                <h1>Teilesuche</h1>
+                <hr>
+                <div style="margin-top: 20px;">
+                    <input type="text" id="search-input" placeholder="Teilenummer eingeben..." style="padding: 10px; width: 250px;">
+                    <button onclick="searchPart()" style="padding: 10px 20px; background: var(--accent-color); color: white; border: none; cursor: pointer;">Suchen</button>
+                </div>
+                <div id="search-result-container"></div>
+            </div>
+
+            <div id="page-stock" class="content-page hidden">
+                <h1>Lagerverwaltung</h1>
+                <p>Mengen für geladene Teile anpassen...</p>
+            </div>
+            
+            <div id="page-order" class="content-page hidden">
+                <h1>Bestandsabgleich</h1>
+                <p>Bestelldatei gegen Live-Bestand prüfen.</p>
+            </div>
+
+            <div id="page-admin" class="content-page hidden">
+                <h1>Stammdaten-Update</h1>
+                <p>Importieren Sie den Teilekatalog ohne Lagerbestände zu überschreiben.</p>
+                <hr>
+                <div style="margin: 30px 0; padding: 20px; border: 2px dashed #3498db; border-radius: 8px; text-align: center;">
+                    <input type="file" id="csv-upload" accept=".csv" style="margin-bottom: 20px;">
+                    <br>
+                    <button onclick="processCSV()" style="padding: 12px 25px; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                        Import starten
+                    </button>
+                </div>
+                <div id="import-status" class="hidden"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- KONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDWXj3UpPlqvIZx80VqE7JPGSTqJgRY-0E",
+            authDomain: "puredisplay-66e76.firebaseapp.com",
+            projectId: "puredisplay-66e76",
+            storageBucket: "puredisplay-66e76.firebasestorage.app",
+            messagingSenderId: "204186912930",
+            appId: "1:204186912930:web:5622e19fd3beb463aceffb"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // --- AUTH LOGIK ---
+        async function handleLogin() {
+            const tenant = document.getElementById('login-tenant').value.trim();
+            const email = document.getElementById('login-email').value.trim();
+            const pass = document.getElementById('login-pass').value;
+            const errorDiv = document.getElementById('error-msg');
+
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, pass);
+                const userDoc = await db.collection('users').doc(userCredential.user.uid).get();
+                
+                if (userDoc.exists && userDoc.data().tenantKey === tenant) {
+                    localStorage.setItem('puredisplay_last_tenant', tenant);
+                    initApp(tenant);
+                } else {
+                    await auth.signOut();
+                    errorDiv.innerText = "Falscher Kundenschlüssel.";
+                }
+            } catch (error) {
+                errorDiv.innerText = "Fehler: " + error.message;
+            }
         }
 
-        btn.disabled = true;
-        log.innerHTML = "Lese Datei...<br>";
+        function initApp(tenant) {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('app-shell').classList.remove('hidden');
+            document.getElementById('display-tenant').innerText = tenant;
+        }
 
-        Papa.parse(fileInput.files[0], {
-            header: true,
-            skipEmptyLines: true,
-            complete: async function(results) {
-                const data = results.data;
-                let successCount = 0;
+        function logout() {
+            auth.signOut().then(() => location.reload());
+        }
 
-                log.innerHTML = `Starte Upload von ${data.length} Zeilen...<br>`;
+        // --- NAVIGATION ---
+        function showPage(pageId, element) {
+            document.querySelectorAll('.content-page').forEach(p => p.classList.add('hidden'));
+            document.getElementById('page-' + pageId).classList.remove('hidden');
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            if(element) element.classList.add('active');
+        }
 
-                for (let i = 0; i < data.length; i++) {
-                    const item = data[i];
-                    const partId = item["Material code"]; // Dokument-ID ist die Teilenummer
+        // --- SUCHE ---
+        async function searchPart() {
+            const code = document.getElementById('search-input').value.trim();
+            const tenant = localStorage.getItem('puredisplay_last_tenant');
+            const container = document.getElementById('search-result-container');
+
+            if (!code) return;
+
+            try {
+                const doc = await db.collection('tenants').doc(tenant).collection('inventory').doc(code).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    const stock = data.stock || 0;
                     
-                    if (!partId) continue;
-
-                    try {
-                        // Speichern in Collection 'parts'
-                        await db.collection("parts").doc(partId).set({
-                            name: item["SAP material name"] || "Unbekannt",
-                            min_packing: parseInt(item["Minimum packing quantity"]) || 1,
-                            vehicles: item["Applicable vehicle series"] || "N/A",
-                            new_part_code: item["New part code"] || "",
-                            last_sync: firebase.firestore.FieldValue.serverTimestamp()
-                        }, { merge: true }); // 'merge: true' bewahrt deine manuellen Lagerorte!
-
-                        successCount++;
-                        
-                        // Fortschritt alle 5 Einträge anzeigen
-                        if (successCount % 5 === 0 || successCount === data.length) {
-                            log.innerHTML = `Fortschritt: ${successCount} / ${data.length}<br>Letztes Teil: ${partId}`;
-                            log.scrollTop = log.scrollHeight;
-                        }
-                    } catch (err) {
-                        console.error(err);
-                        log.innerHTML += `<br><span class="error">Fehler bei ${partId}: ${err.message}</span>`;
+                    let replaceUI = "";
+                    if (stock <= 0 && data.new_part_code) {
+                        replaceUI = `
+                            <div style="background: #fff3cd; padding: 10px; margin-top: 10px; border: 1px solid #ffeeba;">
+                                ⚠️ Bestand 0. Nachfolger: <strong>${data.new_part_code}</strong><br>
+                                <button onclick="document.getElementById('search-input').value='${data.new_part_code}'; searchPart();">Zu Nachfolger wechseln</button>
+                            </div>`;
                     }
-                }
-                log.innerHTML += `<br><br>✅ IMPORT ABGESCHLOSSEN!<br>${successCount} Teile sind jetzt live.`;
-                btn.disabled = false;
-            }
-        });
-    }
-</script>
 
+                    container.innerHTML = `
+                        <div class="search-card">
+                            <h3>${code}</h3>
+                            <p><strong>Name:</strong> ${data.name}</p>
+                            <p><strong>Lagerort:</strong> <span style="color:blue">${data.location || 'Nicht zugewiesen'}</span></p>
+                            <p><strong>Bestand:</strong> <span style="font-size:1.2rem; font-weight:bold;">${stock}</span></p>
+                            ${replaceUI}
+                        </div>`;
+                } else {
+                    container.innerHTML = `<p style="color:red; margin-top:20px;">Teil nicht gefunden.</p>`;
+                }
+            } catch (e) { alert("Suche fehlgeschlagen."); }
+        }
+
+        // --- STAMMDATEN IMPORT ---
+        async function processCSV() {
+            const fileInput = document.getElementById('csv-upload');
+            const statusDiv = document.getElementById('import-status');
+            const tenant = localStorage.getItem('puredisplay_last_tenant');
+            
+            if (!fileInput.files[0]) return alert("Datei wählen!");
+
+            statusDiv.classList.remove('hidden');
+            statusDiv.innerHTML = "Import läuft...";
+            
+            Papa.parse(fileInput.files[0], {
+                header: true,
+                skipEmptyLines: true,
+                complete: async function(results) {
+                    let count = 0;
+                    for (let row of results.data) {
+                        const code = row.material_code ? row.material_code.trim() : null;
+                        if (code) {
+                            await db.collection('tenants').doc(tenant).collection('inventory').doc(code).set({
+                                name: row.part_name || "Unbekannt",
+                                new_part_code: row.replacement_code || "",
+                                min_packing: parseInt(row.package_size) || 1
+                            }, { merge: true });
+                            count++;
+                        }
+                    }
+                    statusDiv.innerHTML = `✅ Fertig! ${count} Teile verarbeitet/aktualisiert.`;
+                }
+            });
+        }
+
+        window.onload = () => {
+            const lastTenant = localStorage.getItem('puredisplay_last_tenant');
+            if(lastTenant) document.getElementById('login-tenant').value = lastTenant;
+        };
+    </script>
 </body>
 </html>
