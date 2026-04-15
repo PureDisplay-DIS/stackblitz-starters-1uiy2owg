@@ -74,7 +74,7 @@
                 </button>
             </div>
 
-            <div id="login-error" class="text-red-500 text-[11px] mt-6 text-center font-bold h-4"></div>
+            <div id="login-error" class="text-red-500 text-[11px] mt-6 text-center font-bold px-4 leading-relaxed h-auto min-h-[1rem]"></div>
             
             <div class="mt-8 pt-6 border-t border-slate-100 flex justify-center gap-6 text-[10px] font-bold text-slate-400 uppercase">
                 <button id="btn-show-impressum" class="hover:text-blue-500 transition">Impressum</button>
@@ -266,13 +266,13 @@
                 <p><strong>PureDisplay DIS GmbH</strong><br>Murnau am Staffelsee, Deutschland</p>
                 <p>Vertretungsberechtigte Geschäftsführung: Martin Lemke</p>
                 <p>E-Mail: info@puredisplay.de<br>Web: www.puredisplay.de</p>
-                <p class="text-xs pt-4 border-t">Haftungshinweis: Trotz sorgfältiger inhaltlicher Kontrolle übernehmen wir keine Haftung für die Inhalte externer Links.</p>
+                <p class="text-xs pt-4 border-t font-medium">Haftungshinweis: Trotz sorgfältiger inhaltlicher Kontrolle übernehmen wir keine Haftung für die Inhalte externer Links.</p>
             </div>
             <button id="btn-close-impressum" class="mt-8 w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase text-xs">Schließen</button>
         </div>
     </div>
 
-    <div id="modal-datenschutz" class="fixed inset-0 modal-overlay z-[200] hidden items-center justify-center p-6">
+    <div id="modal-datenschutz" class="fixed inset-0 modal-overlay z-[200] hidden items-center justify-center p-6 text-left">
         <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-y-auto max-h-[80vh]">
             <h2 class="text-2xl font-black mb-6">Datenschutzerklärung</h2>
             <div class="space-y-4 text-sm text-slate-600 leading-relaxed text-left">
@@ -293,7 +293,7 @@
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, query, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Korrekter API Key für puredisplay-66e76
+        // Firebase Konfiguration
         const apiKey = "AIzaSyDWXj3UpPlqvIZx80VqE7JPGSTqJgRY-0E"; 
         const firebaseConfig = {
             apiKey: apiKey,
@@ -305,15 +305,7 @@
         };
         const appId = "puredisplay-66e76";
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        let companyId = "puredisplay"; 
-        let activeId = null;
-        let activeQty = 0;
-        let isKeyValidated = false;
-
+        // Globale UI-Helfer (Funktionieren unabhängig von Firebase-Initialisierung)
         const toggleModal = (id) => {
             const m = document.getElementById(id);
             if (m.classList.contains('hidden')) {
@@ -325,13 +317,29 @@
             }
         };
 
-        // Modal Button Listeners
-        document.getElementById('btn-show-impressum').onclick = () => toggleModal('modal-impressum');
-        document.getElementById('btn-show-datenschutz').onclick = () => toggleModal('modal-datenschutz');
-        document.getElementById('footer-btn-impressum').onclick = () => toggleModal('modal-impressum');
-        document.getElementById('footer-btn-datenschutz').onclick = () => toggleModal('modal-datenschutz');
-        document.getElementById('btn-close-impressum').onclick = () => toggleModal('modal-impressum');
-        document.getElementById('btn-close-datenschutz').onclick = () => toggleModal('modal-datenschutz');
+        // Event-Listener für Pop-ups sofort binden
+        document.getElementById('btn-show-impressum').addEventListener('click', () => toggleModal('modal-impressum'));
+        document.getElementById('btn-show-datenschutz').addEventListener('click', () => toggleModal('modal-datenschutz'));
+        document.getElementById('footer-btn-impressum').addEventListener('click', () => toggleModal('modal-impressum'));
+        document.getElementById('footer-btn-datenschutz').addEventListener('click', () => toggleModal('modal-datenschutz'));
+        document.getElementById('btn-close-impressum').addEventListener('click', () => toggleModal('modal-impressum'));
+        document.getElementById('btn-close-datenschutz').addEventListener('click', () => toggleModal('modal-datenschutz'));
+
+        // Firebase Initialisierung
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch (e) {
+            console.error("Firebase Init Fehler:", e);
+            document.getElementById('login-error').innerText = "Kritischer Fehler: Verbindung zur Datenbank fehlgeschlagen.";
+        }
+
+        let companyId = "puredisplay"; 
+        let activeId = null;
+        let activeQty = 0;
+        let isKeyValidated = false;
 
         onAuthStateChanged(auth, async (user) => {
             if (user && (isKeyValidated || !user.isAnonymous)) {
@@ -340,7 +348,7 @@
                     document.getElementById('auth-screen').classList.add('hidden');
                     document.getElementById('app-shell').classList.remove('hidden');
                     document.getElementById('user-email').innerText = user.email;
-                    document.getElementById('user-initials').innerText = user.email.substring(0,2).toUpperCase();
+                    document.getElementById('user-initials').innerText = (user.email || "U").substring(0,2).toUpperCase();
                     
                     const userProfileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'profile');
                     const userSnap = await getDoc(userProfileRef);
@@ -357,15 +365,30 @@
             }
         });
 
+        // Schritt 1: Key Validierung
         document.getElementById('btn-validate-key').addEventListener('click', async () => {
             const key = document.getElementById('login-key').value.trim();
             const err = document.getElementById('login-error');
             if (!key) { err.innerText = "Bitte Kundenschlüssel eingeben."; return; }
             err.innerText = "Prüfe Zugangsberechtigung...";
+            
             try {
-                if (!auth.currentUser) { await signInAnonymously(auth); }
+                // Regel 3: Anonyme Auth vor Abfrage (WICHTIG: Anbieter "Anonym" in Konsole aktivieren!)
+                if (!auth.currentUser) { 
+                    try {
+                        await signInAnonymously(auth); 
+                    } catch (authErr) {
+                        if (authErr.code === 'auth/operation-not-allowed') {
+                            err.innerHTML = "FEHLER: Anbieter 'Anonym' ist in der Firebase Console deaktiviert. <br>Bitte unter 'Authentication > Sign-in method' einschalten.";
+                            return;
+                        }
+                        throw authErr;
+                    }
+                }
+                
                 const keyRef = doc(db, 'artifacts', appId, 'public', 'data', 'customer_keys', key);
                 const keySnap = await getDoc(keyRef);
+                
                 if (keySnap.exists()) {
                     document.getElementById('login-step-1').classList.add('hidden');
                     document.getElementById('login-step-2').classList.remove('hidden');
@@ -376,10 +399,12 @@
                     isKeyValidated = false;
                 }
             } catch (error) {
-                err.innerText = "Verbindungsfehler bei der Schlüsselprüfung.";
+                console.error(error);
+                err.innerText = "Verbindungsfehler. Bitte Internetverbindung und Browsereinstellungen prüfen.";
             }
         });
 
+        // Schritt 2: Anmeldung
         document.getElementById('btn-login').addEventListener('click', async () => {
             const email = document.getElementById('login-email').value.trim();
             const pass = document.getElementById('login-pass').value;
@@ -408,35 +433,39 @@
         async function loadTable(filter = "") {
             const body = document.getElementById('results-body');
             body.innerHTML = '<tr><td colspan="5" class="p-20 text-center"><div class="animate-pulse font-black text-slate-300 uppercase text-[10px]">Synchronisiere Mandantendaten...</div></td></tr>';
-            const partsCol = collection(db, 'artifacts', appId, 'public', 'data', 'parts');
-            const snap = await getDocs(partsCol);
-            body.innerHTML = '';
-            let count = 0;
-            snap.forEach(docSnap => {
-                const d = docSnap.data();
-                if(d.companyId !== companyId) return;
-                if (filter && !docSnap.id.toLowerCase().includes(filter.toLowerCase()) && !d.part_name?.toLowerCase().includes(filter.toLowerCase())) return;
-                count++;
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition border-b border-slate-100 group";
-                tr.innerHTML = `
-                    <td class="p-6 font-mono font-bold text-slate-800 text-sm">${docSnap.id}</td>
-                    <td class="p-6">
-                        <div class="font-bold text-slate-700">${d.part_name || '-'}</div>
-                        ${d.replacement_code ? `<div class="text-[9px] text-orange-500 font-black uppercase mt-1">Nachfolger: ${d.replacement_code}</div>` : ''}
-                    </td>
-                    <td class="p-6"><span class="bg-slate-100 px-3 py-1 rounded-lg text-xs font-bold text-slate-500">${d.location || '-'}</span></td>
-                    <td class="p-6 font-black text-xl text-slate-900 tabular-nums">${d.quantity || 0}</td>
-                    <td class="p-6 text-right">
-                        <button id="sel-${docSnap.id}" class="bg-white border border-slate-200 hover:bg-slate-900 hover:text-white px-5 py-2 rounded-xl transition text-[10px] font-black uppercase tracking-widest">Wählen</button>
-                    </td>
-                `;
-                body.appendChild(tr);
-                document.getElementById(`sel-${docSnap.id}`).onclick = () => {
-                    prepEdit(docSnap.id, d.part_name, d.quantity || 0, d.location || '', d.replacement_code || '', d.packageSize || 1);
-                };
-            });
-            if(count === 0) body.innerHTML = '<tr><td colspan="5" class="p-20 text-center text-slate-300 italic">Keine Einträge gefunden.</td></tr>';
+            try {
+                const partsCol = collection(db, 'artifacts', appId, 'public', 'data', 'parts');
+                const snap = await getDocs(partsCol);
+                body.innerHTML = '';
+                let count = 0;
+                snap.forEach(docSnap => {
+                    const d = docSnap.data();
+                    if(d.companyId !== companyId) return;
+                    if (filter && !docSnap.id.toLowerCase().includes(filter.toLowerCase()) && !d.part_name?.toLowerCase().includes(filter.toLowerCase())) return;
+                    count++;
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 transition border-b border-slate-100 group text-left";
+                    tr.innerHTML = `
+                        <td class="p-6 font-mono font-bold text-slate-800 text-sm">${docSnap.id}</td>
+                        <td class="p-6">
+                            <div class="font-bold text-slate-700">${d.part_name || '-'}</div>
+                            ${d.replacement_code ? `<div class="text-[9px] text-orange-500 font-black uppercase mt-1">Nachfolger: ${d.replacement_code}</div>` : ''}
+                        </td>
+                        <td class="p-6"><span class="bg-slate-100 px-3 py-1 rounded-lg text-xs font-bold text-slate-500">${d.location || '-'}</span></td>
+                        <td class="p-6 font-black text-xl text-slate-900 tabular-nums">${d.quantity || 0}</td>
+                        <td class="p-6 text-right">
+                            <button id="sel-${docSnap.id.replace(/\W/g, '_')}" class="bg-white border border-slate-200 hover:bg-slate-900 hover:text-white px-5 py-2 rounded-xl transition text-[10px] font-black uppercase tracking-widest">Wählen</button>
+                        </td>
+                    `;
+                    body.appendChild(tr);
+                    document.getElementById(`sel-${docSnap.id.replace(/\W/g, '_')}`).onclick = () => {
+                        prepEdit(docSnap.id, d.part_name, d.quantity || 0, d.location || '', d.replacement_code || '', d.packageSize || 1);
+                    };
+                });
+                if(count === 0) body.innerHTML = '<tr><td colspan="5" class="p-20 text-center text-slate-300 italic">Keine Einträge gefunden.</td></tr>';
+            } catch (e) {
+                body.innerHTML = '<tr><td colspan="5" class="p-20 text-center text-red-500 font-bold italic">Fehler beim Laden der Bestände. Bitte Berechtigungen prüfen.</td></tr>';
+            }
         }
 
         const prepEdit = (id, name, qty, loc, repl, moq) => {
@@ -455,7 +484,12 @@
             }
             document.getElementById('edit-card').classList.remove('hidden');
             document.getElementById('no-edit-msg').classList.add('hidden');
-            document.querySelector('[data-page="stock"]').click();
+            
+            // Simuliere Klick auf Menüpunkt "Lagerpflege"
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(n => {
+                if (n.getAttribute('data-page') === 'stock') n.click();
+            });
         };
 
         const adjust = (val) => {
@@ -474,10 +508,14 @@
                 await updateDoc(partRef, { quantity: parseInt(activeQty), location: newLoc });
                 alert("Daten erfolgreich in Cloud gespeichert.");
                 loadTable();
-                document.querySelector('[data-page="search"]').click();
+                // Simuliere Klick auf Menüpunkt "Teilesuche"
+                document.querySelectorAll('.nav-item').forEach(n => {
+                    if (n.getAttribute('data-page') === 'search') n.click();
+                });
             } catch(e) { alert("Fehler beim Speichern: Keine Berechtigung."); }
         };
 
+        // --- BESTELLABGLEICH ---
         document.getElementById('recon-upload').onclick = () => document.getElementById('recon-file-input').click();
         document.getElementById('recon-file-input').addEventListener('change', (e) => {
             const reader = new FileReader();
@@ -502,7 +540,7 @@
                     const ist = currentStock[code] || 0;
                     const diff = ist - soll;
                     const tr = document.createElement('tr');
-                    tr.className = "border-b border-slate-50";
+                    tr.className = "border-b border-slate-50 text-left";
                     let statusHtml = (ist >= soll) 
                         ? '<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[9px] font-black">VORRÄTIG</span>' 
                         : '<span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-[9px] font-black">FEHLBESTAND</span>';
@@ -527,6 +565,7 @@
             document.getElementById('recon-file-input').value = '';
         };
 
+        // --- STAMMDATEN IMPORT ---
         document.getElementById('master-import-trigger').onclick = () => document.getElementById('excel-input').click();
         document.getElementById('excel-input').addEventListener('change', (e) => {
             const reader = new FileReader();
