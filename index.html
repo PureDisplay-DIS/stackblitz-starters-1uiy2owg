@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PureDisplay - Parts Management System</title>
+    <title>PureDisplay - Enterprise Parts Portal</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -31,12 +31,6 @@
             @apply text-slate-400 hover:bg-slate-800 hover:text-slate-200;
         }
 
-        .glass-card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            @apply border border-white/20 shadow-xl;
-        }
-
         .hidden { display: none !important; }
         .modal-overlay { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); }
         .tabular-nums { font-variant-numeric: tabular-nums; }
@@ -44,8 +38,7 @@
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden text-slate-900">
@@ -59,7 +52,7 @@
     <div id="auth-screen" class="fixed inset-0 bg-slate-950 flex items-center justify-center z-[100]">
         <div class="bg-white p-12 rounded-[3rem] shadow-2xl w-full max-w-md border border-slate-200 relative">
             
-            <!-- Zahnrad für Kundenschlüssel -->
+            <!-- Zahnrad für Kundenschlüssel (Konfiguration) -->
             <button id="btn-open-config" class="absolute top-10 right-10 text-slate-300 hover:text-blue-500 transition-all transform hover:rotate-90">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -83,16 +76,21 @@
                     <input type="password" id="login-pass" placeholder="••••••••" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition">
                 </div>
                 <button id="btn-login" class="w-full bg-slate-900 hover:bg-blue-600 text-white font-bold py-5 rounded-2xl transition-all shadow-xl uppercase tracking-widest text-[11px] mt-4 active:scale-[0.98]">
-                    System anmelden
+                    Einloggen
                 </button>
             </div>
 
             <div id="key-warning" class="mt-8 p-5 bg-orange-50 border border-orange-100 rounded-2xl text-center">
-                <p class="text-orange-700 text-xs font-bold uppercase tracking-tight">Key erforderlich</p>
-                <p class="text-slate-500 text-[10px] mt-1 font-medium">Hinterlegen Sie zuerst Ihren Mandanten-Key über das Zahnrad oben rechts.</p>
+                <p class="text-orange-700 text-xs font-bold uppercase tracking-tight">Konfiguration erforderlich</p>
+                <p class="text-slate-500 text-[10px] mt-1 font-medium text-center">Bitte Firmenschlüssel über das Zahnrad hinterlegen.</p>
             </div>
 
             <div id="login-error" class="text-red-500 text-[11px] mt-6 text-center font-bold min-h-[1.5rem] px-4"></div>
+
+            <div class="mt-8 pt-6 border-t border-slate-100 flex justify-center gap-6 text-[10px] font-bold text-slate-400 uppercase text-center">
+                <button id="btn-show-impressum" class="hover:text-blue-500 transition">Impressum</button>
+                <button id="btn-show-datenschutz" class="hover:text-blue-500 transition">Datenschutz</button>
+            </div>
         </div>
     </div>
 
@@ -106,31 +104,17 @@
                     <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg shadow-blue-500/20">PD</div>
                     <div>
                         <h1 class="text-white font-black text-xl leading-none">PureDisplay</h1>
-                        <p id="company-label" class="text-[9px] text-blue-500 font-black uppercase mt-1 tracking-widest">Mandant: -</p>
+                        <p id="company-label" class="text-[9px] text-blue-500 font-black uppercase mt-1 tracking-widest uppercase">Mandant: -</p>
                     </div>
                 </div>
             </div>
 
             <nav class="flex-grow px-6 space-y-2">
-                <div class="px-4 mb-4">
-                    <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Bestand & Suche</p>
-                </div>
-                <div class="nav-item active-nav" data-page="search">
-                    <span class="text-lg">🔍</span> <span>Teilesuche</span>
-                </div>
-                <div class="nav-item" data-page="stock">
-                    <span class="text-lg">📦</span> <span>Lagerpflege</span>
-                </div>
-                
-                <div class="px-4 mt-10 mb-4">
-                    <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Verwaltung</p>
-                </div>
-                <div class="nav-item" data-page="recon">
-                    <span class="text-lg">📊</span> <span>Bestellabgleich</span>
-                </div>
-                <div class="nav-item" data-page="order">
-                    <span class="text-lg">📥</span> <span>Master-Import</span>
-                </div>
+                <div class="px-4 mb-4"><p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Navigation</p></div>
+                <div class="nav-item active-nav" data-page="search"><span>🔍</span> <span>Teilesuche</span></div>
+                <div class="nav-item" data-page="stock"><span>📦</span> <span>Lagerpflege</span></div>
+                <div class="nav-item" data-page="recon"><span>📊</span> <span>Bestellabgleich</span></div>
+                <div class="nav-item" data-page="order"><span>📥</span> <span>Master-Import</span></div>
             </nav>
 
             <div class="p-8 border-t border-slate-900 bg-slate-950/50">
@@ -138,7 +122,7 @@
                     <div id="user-initials" class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-white uppercase shrink-0">?</div>
                     <div class="overflow-hidden">
                         <p id="user-email-display" class="text-[11px] font-bold text-slate-200 truncate italic"></p>
-                        <p class="text-[8px] uppercase text-slate-500 font-black mt-0.5">Mitarbeiter</p>
+                        <p class="text-[8px] uppercase text-slate-500 font-black mt-0.5">Sitzung aktiv</p>
                     </div>
                 </div>
                 <button id="btn-logout" class="w-full bg-slate-900 hover:bg-red-600/20 hover:text-red-500 text-slate-500 py-3.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest border border-slate-800">Abmelden</button>
@@ -151,24 +135,21 @@
             <!-- Page: Suche -->
             <div id="page-search" class="content-page p-12 h-full flex flex-col">
                 <div class="max-w-6xl w-full mx-auto flex flex-col h-full">
-                    <header class="mb-10">
+                    <header class="mb-10 text-left">
                         <h2 class="text-4xl font-black text-slate-900 tracking-tight mb-2">Lagerbestandsabfrage</h2>
                         <p class="text-slate-500 font-medium">Suchen Sie nach Materialnummern oder Bezeichnungen im Firmenbestand.</p>
                     </header>
 
                     <div class="flex gap-4 mb-8">
-                        <div class="relative flex-grow group">
-                            <span class="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors text-xl">🔍</span>
-                            <input type="text" id="search-input" placeholder="z.B. 10004931 oder Display..." class="w-full pl-16 pr-6 py-5 rounded-[1.5rem] border-none shadow-xl shadow-slate-200/50 focus:ring-4 focus:ring-blue-500/10 outline-none text-lg font-medium transition-all">
-                        </div>
+                        <input type="text" id="search-input" placeholder="Materialnummer eingeben..." class="flex-grow pl-8 pr-6 py-5 rounded-[1.5rem] border-none shadow-xl shadow-slate-200/50 focus:ring-4 focus:ring-blue-500/10 outline-none text-lg font-medium transition-all">
                         <button id="btn-search-trigger" class="bg-slate-900 text-white px-12 rounded-[1.5rem] font-black uppercase text-[11px] tracking-widest shadow-2xl hover:bg-blue-600 transition-all active:scale-95">Abfrage</button>
                     </div>
 
                     <div class="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/60 border border-slate-100 flex-grow overflow-hidden flex flex-col">
                         <div class="overflow-y-auto flex-grow">
                             <table class="w-full text-left border-collapse">
-                                <thead class="sticky top-0 bg-white/80 backdrop-blur-md z-10">
-                                    <tr class="border-b border-slate-50">
+                                <thead class="sticky top-0 bg-white/80 backdrop-blur-md z-10 border-b border-slate-100 text-left">
+                                    <tr>
                                         <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Material Code</th>
                                         <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Bezeichnung</th>
                                         <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Lagerort</th>
@@ -176,7 +157,7 @@
                                         <th class="p-6"></th>
                                     </tr>
                                 </thead>
-                                <tbody id="results-body" class="divide-y divide-slate-50">
+                                <tbody id="results-body" class="divide-y divide-slate-50 text-left">
                                     <tr><td colspan="5" class="p-24 text-center text-slate-300 font-medium italic">Bitte starten Sie eine Suchanfrage.</td></tr>
                                 </tbody>
                             </table>
@@ -187,129 +168,134 @@
             
             <!-- Page: Lagerpflege -->
             <div id="page-stock" class="content-page p-12 hidden h-full overflow-y-auto">
-                <div class="max-w-4xl mx-auto">
+                <div class="max-w-4xl mx-auto text-left">
                     <header class="mb-12">
                         <h2 class="text-4xl font-black text-slate-900 tracking-tight">Bestand & Platz pflegen</h2>
                         <p class="text-slate-500 font-medium">Aktualisieren Sie physische Mengen und Lagerplätze.</p>
                     </header>
 
                     <div id="edit-card" class="bg-white p-12 rounded-[3.5rem] shadow-2xl border border-slate-100 hidden relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-40 h-40 bg-blue-50 rounded-bl-[100px] flex items-center justify-center">
-                            <span class="text-5xl opacity-50">📦</span>
-                        </div>
-
                         <div class="mb-12">
                             <h3 id="edit-name" class="text-3xl font-black text-slate-900 mb-2 leading-tight pr-20">-</h3>
                             <p id="edit-code-display" class="text-blue-600 font-mono font-bold text-lg tracking-tighter"></p>
                         </div>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 text-left">
                             <div class="space-y-8">
                                 <div class="space-y-3">
-                                    <label class="block text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Physischer Lagerplatz</label>
-                                    <input type="text" id="edit-location" placeholder="z.B. Regal A-01-B" class="w-full p-6 bg-slate-50 border-2 border-slate-50 rounded-[1.5rem] font-bold text-lg outline-none focus:border-blue-500 focus:bg-white transition-all">
+                                    <label class="block text-[11px] font-black text-slate-400 uppercase ml-1">Physischer Lagerplatz</label>
+                                    <input type="text" id="edit-location" placeholder="z.B. Regal A-01-B" class="w-full p-6 bg-slate-50 border-2 border-slate-50 rounded-[1.5rem] font-bold text-lg outline-none focus:border-blue-500 transition-all">
                                 </div>
                                 <div class="p-6 bg-slate-50 rounded-[1.5rem] border border-slate-100">
-                                    <p class="text-[9px] font-black text-slate-400 uppercase mb-2">Stammdaten Information</p>
                                     <div class="flex justify-between text-sm font-bold text-slate-700">
                                         <span>Packeinheit (MOQ):</span>
-                                        <span id="edit-moq" class="text-slate-900">-</span>
+                                        <span id="edit-moq" class="text-slate-900">1</span>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="flex flex-col items-center justify-center bg-blue-50/50 rounded-[2.5rem] p-10 border-2 border-dashed border-blue-200">
-                                <label class="text-[11px] font-black text-blue-500 uppercase tracking-widest mb-8">Aktuelle Menge (PCS)</label>
                                 <div class="flex items-center gap-10">
-                                    <button id="btn-adj-minus" class="w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center text-3xl font-black text-slate-800 hover:bg-slate-950 hover:text-white transition transform active:scale-90">-</button>
-                                    <span id="edit-qty" class="text-8xl font-black text-slate-900 tabular-nums tracking-tighter">0</span>
-                                    <button id="btn-adj-plus" class="w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center text-3xl font-black text-slate-800 hover:bg-slate-950 hover:text-white transition transform active:scale-90">+</button>
+                                    <button id="btn-adj-minus" class="w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center text-3xl font-black active:scale-90 transition">-</button>
+                                    <span id="edit-qty" class="text-8xl font-black tabular-nums">0</span>
+                                    <button id="btn-adj-plus" class="w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center text-3xl font-black active:scale-90 transition">+</button>
                                 </div>
                             </div>
                         </div>
 
                         <div class="mt-12 pt-8 border-t border-slate-50 flex justify-end">
-                            <button id="btn-save-edit" class="bg-blue-600 text-white px-16 py-6 rounded-[1.5rem] font-black shadow-2xl shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95 uppercase tracking-widest text-[11px]">
-                                Änderungen in Cloud speichern
-                            </button>
+                            <button id="btn-save-edit" class="bg-blue-600 text-white px-16 py-6 rounded-[1.5rem] font-black shadow-2xl hover:bg-blue-700 transition active:scale-95 uppercase text-[11px] tracking-widest">Cloud speichern</button>
                         </div>
                     </div>
 
                     <div id="no-edit-msg" class="p-32 text-center border-4 border-dashed border-slate-200 rounded-[3.5rem] flex flex-col items-center">
-                        <span class="text-7xl opacity-10 mb-6">🔎</span>
-                        <p class="text-slate-400 font-bold text-xl italic max-w-xs mx-auto">Wählen Sie ein Material in der Suche aus, um es zu bearbeiten.</p>
+                        <p class="text-slate-400 font-bold text-xl italic">Wählen Sie ein Material in der Suche aus.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Page: Recon & Import (Dummy) -->
-            <div id="page-recon" class="content-page p-12 hidden h-full flex items-center justify-center">
-                <div class="text-center bg-white p-20 rounded-[3rem] shadow-xl max-w-md border border-slate-100">
-                    <div class="text-7xl mb-8">📊</div>
-                    <h2 class="text-2xl font-black text-slate-900 mb-4 uppercase">Bestellabgleich</h2>
-                    <p class="text-slate-500 font-medium leading-relaxed">Hier können Sie bald Bestelllisten hochladen, um diese gegen den Ist-Bestand zu prüfen.</p>
+            <!-- Page: Recon -->
+            <div id="page-recon" class="content-page p-12 hidden h-full flex flex-col">
+                <h2 class="text-4xl font-black text-slate-900 mb-10 text-left">Bestellabgleich</h2>
+                <div id="recon-upload" class="bg-white p-24 border-4 border-dashed border-slate-200 rounded-[3rem] text-center cursor-pointer hover:bg-blue-50/30 transition-all group" onclick="document.getElementById('recon-file-input').click()">
+                    <input type="file" id="recon-file-input" accept=".xlsx, .xls" class="hidden">
+                    <div class="text-6xl mb-6 group-hover:scale-110 transition">📊</div>
+                    <p class="text-2xl font-black mb-2">Bestellliste abgleichen (.xlsx)</p>
+                    <p class="text-slate-400 font-medium">System prüft material_code und Menge gegen IST-Bestand.</p>
+                </div>
+                <div id="recon-results" class="bg-white rounded-[2rem] shadow-xl overflow-hidden flex-grow hidden mt-10">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b">
+                            <tr><th class="p-6 text-[10px] font-black text-slate-400 uppercase">Code</th><th class="p-6 text-[10px] font-black text-slate-400 uppercase">Bestellung</th><th class="p-6 text-[10px] font-black text-slate-400 uppercase">Lager</th><th class="p-6 text-[10px] font-black text-slate-400 uppercase">Diff</th><th class="p-6">Status</th></tr>
+                        </thead>
+                        <tbody id="recon-body" class="divide-y divide-slate-50"></tbody>
+                    </table>
                 </div>
             </div>
 
-            <div id="page-order" class="content-page p-12 hidden h-full flex items-center justify-center">
-                <div class="text-center bg-white p-20 rounded-[3rem] shadow-xl max-w-md border border-slate-100">
-                    <div class="text-7xl mb-8">📥</div>
-                    <h2 class="text-2xl font-black text-slate-900 mb-4 uppercase">Master-Import</h2>
-                    <p class="text-slate-500 font-medium leading-relaxed">Funktion zur Massenaktualisierung von Stammdaten via Excel wird integriert.</p>
+            <!-- Page: Import -->
+            <div id="page-order" class="content-page p-12 hidden h-full flex flex-col">
+                <h2 class="text-4xl font-black text-slate-900 mb-10 text-left">Master-Import</h2>
+                <div class="bg-white p-24 border-4 border-dashed border-slate-200 rounded-[3rem] text-center cursor-pointer hover:bg-slate-900 hover:text-white transition group" onclick="document.getElementById('excel-input').click()">
+                    <input type="file" id="excel-input" accept=".xlsx, .xls, .csv" class="hidden">
+                    <div class="text-6xl mb-6">📥</div>
+                    <p class="text-2xl font-black mb-2">Stammdaten aktualisieren</p>
+                    <p id="import-status" class="mt-8 inline-block bg-blue-600 text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase">Warte auf Datei</p>
                 </div>
             </div>
 
             <!-- Footer -->
-            <footer class="p-8 text-center text-[10px] font-bold text-slate-400 uppercase tracking-[0.25em] bg-white border-t border-slate-100 flex justify-between items-center px-12 shrink-0">
-                <span class="opacity-50">PureDisplay DIS System &copy; 2026</span>
+            <footer class="p-8 text-center text-[10px] font-bold text-slate-400 uppercase bg-white border-t border-slate-100 flex justify-between items-center px-12 shrink-0">
+                <span class="opacity-50 tracking-widest font-black">PureDisplay DIS GmbH &copy; 2026</span>
                 <div class="flex gap-8">
-                    <button id="btn-show-impressum-footer" class="hover:text-blue-600 transition-colors uppercase tracking-widest">Impressum</button>
-                    <button id="btn-show-datenschutz-footer" class="hover:text-blue-600 transition-colors uppercase tracking-widest">Datenschutz</button>
+                    <button id="footer-btn-impressum" class="hover:text-blue-600 transition-colors uppercase tracking-widest">Impressum</button>
+                    <button id="footer-btn-datenschutz" class="hover:text-blue-600 transition-colors uppercase tracking-widest">Datenschutz</button>
                 </div>
             </footer>
         </main>
     </div>
 
-    <!-- Modal: Mandanten-Konfiguration (Zahnrad) -->
-    <div id="modal-config" class="fixed inset-0 modal-overlay z-[200] hidden items-center justify-center p-6">
-        <div class="bg-white p-12 rounded-[3rem] shadow-2xl w-full max-w-md text-left border border-slate-200">
-            <h2 class="text-2xl font-black mb-2 text-slate-900 leading-tight">Mandanten-Setup</h2>
-            <p class="text-slate-400 text-xs mb-10 font-medium">Hinterlegen Sie Ihren Firmen-Schlüssel für den Datenbankzugriff.</p>
-            
+    <!-- Modals -->
+    <div id="modal-config" class="fixed inset-0 modal-overlay z-[200] hidden items-center justify-center p-6 text-left">
+        <div class="bg-white p-12 rounded-[3rem] shadow-2xl w-full max-w-md border border-slate-200">
+            <h2 class="text-2xl font-black mb-2 text-slate-900">Mandanten-Setup</h2>
+            <p class="text-slate-400 text-xs mb-10 font-medium">Hinterlegen Sie Ihren Firmen-Schlüssel für den Zugriff.</p>
             <div class="space-y-6">
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-400 uppercase ml-1">Ihr Mandanten-Key</label>
-                    <input type="text" id="config-key" placeholder="Key eingeben..." class="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition font-mono font-bold text-blue-600">
-                </div>
-                <button id="btn-save-config" class="w-full bg-slate-900 text-white font-black py-5 rounded-2xl transition shadow-xl uppercase text-[11px] tracking-widest active:scale-95">Verifizieren & Speichern</button>
+                <input type="text" id="config-key" placeholder="Key eingeben..." class="w-full p-6 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 font-mono font-bold text-blue-600">
+                <button id="btn-save-config" class="w-full bg-slate-900 text-white font-black py-5 rounded-2xl transition shadow-xl uppercase text-[11px] tracking-widest active:scale-95">Speichern</button>
             </div>
             <p id="config-status" class="text-[11px] font-bold mt-6 text-center min-h-[1.5rem]"></p>
-            <button id="btn-close-config" class="mt-6 w-full text-slate-400 text-[10px] font-bold uppercase hover:text-slate-600 transition-colors">Abbrechen</button>
+            <button id="btn-close-config" class="mt-6 w-full text-slate-400 text-[10px] font-bold uppercase hover:text-slate-600 text-center">Abbrechen</button>
         </div>
     </div>
 
-    <!-- Modals Legal -->
     <div id="modal-impressum" class="fixed inset-0 modal-overlay z-[200] hidden items-center justify-center p-6">
-        <div class="bg-white p-12 rounded-[3rem] w-full max-w-lg shadow-2xl border border-slate-100">
-            <h2 class="text-2xl font-black mb-8 text-slate-900 uppercase tracking-tight">Impressum</h2>
+        <div class="bg-white p-12 rounded-[3rem] w-full max-w-lg shadow-2xl text-left">
+            <h2 class="text-2xl font-black mb-8 uppercase">Impressum</h2>
             <div class="space-y-6 text-sm text-slate-600 leading-relaxed font-medium">
                 <p><strong>PureDisplay DIS GmbH</strong><br>Murnau am Staffelsee, Deutschland</p>
-                <p>Vertretungsberechtigte Geschäftsführung: Martin Lemke</p>
-                <div class="pt-6 border-t border-slate-100">
-                    <p>E-Mail: info@puredisplay.de</p>
-                    <p>Web: www.puredisplay.de</p>
-                </div>
+                <p>GF: Martin Lemke</p>
+                <div class="pt-6 border-t border-slate-100"><p>E-Mail: info@puredisplay.de</p></div>
             </div>
-            <button id="btn-close-impressum" class="mt-12 w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-xl active:scale-95 transition-all">Fenster Schließen</button>
+            <button id="btn-close-impressum" class="mt-12 w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-[10px]">Schließen</button>
+        </div>
+    </div>
+
+    <div id="modal-datenschutz" class="fixed inset-0 modal-overlay z-[200] hidden items-center justify-center p-6">
+        <div class="bg-white p-12 rounded-[3rem] w-full max-w-lg shadow-2xl text-left">
+            <h2 class="text-2xl font-black mb-8 uppercase">Datenschutz</h2>
+            <div class="space-y-6 text-sm text-slate-600 leading-relaxed font-medium">
+                <p>Daten werden mandantenspezifisch in der Google Cloud (Bavaria/DE) verarbeitet.</p>
+            </div>
+            <button id="btn-close-datenschutz" class="mt-12 w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-[10px]">Verstanden</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, getDocs, setDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Konfiguration
         const apiKey = "AIzaSyDWXj3UpPlqvIZx80VqE7JPGSTqJgRY-0E"; 
         const firebaseConfig = {
             apiKey: apiKey, authDomain: "puredisplay-66e76.firebaseapp.com",
@@ -324,7 +310,6 @@
 
         let activeId = null, activeQty = 0, companyId = "";
 
-        // UI Helpers
         const toggle = (id, show) => {
             const el = document.getElementById(id);
             if (!el) return;
@@ -332,24 +317,25 @@
             else { el.classList.add('hidden'); el.classList.remove('flex'); }
         };
 
-        // Event Binding
+        // Modal Binding - Korrekt ohne Null-Errors
         document.getElementById('btn-open-config').onclick = () => toggle('modal-config', true);
         document.getElementById('btn-close-config').onclick = () => toggle('modal-config', false);
         document.getElementById('btn-show-impressum').onclick = () => toggle('modal-impressum', true);
-        document.getElementById('btn-show-impressum-footer').onclick = () => toggle('modal-impressum', true);
+        document.getElementById('footer-btn-impressum').onclick = () => toggle('modal-impressum', true);
+        document.getElementById('footer-btn-datenschutz').onclick = () => toggle('modal-datenschutz', true);
+        document.getElementById('btn-show-datenschutz').onclick = () => toggle('modal-datenschutz', true);
         document.getElementById('btn-close-impressum').onclick = () => toggle('modal-impressum', false);
+        document.getElementById('btn-close-datenschutz').onclick = () => toggle('modal-datenschutz', false);
 
         const updateUIForKey = (key) => {
-            const form = document.getElementById('login-form-area');
-            const warn = document.getElementById('key-warning');
             if (key) {
-                form.classList.remove('opacity-50', 'pointer-events-none');
-                warn.classList.add('hidden');
+                document.getElementById('login-form-area').classList.remove('opacity-50', 'pointer-events-none');
+                document.getElementById('key-warning').classList.add('hidden');
                 companyId = key;
                 document.getElementById('config-key').value = key;
             } else {
-                form.classList.add('opacity-50', 'pointer-events-none');
-                warn.classList.remove('hidden');
+                document.getElementById('login-form-area').classList.add('opacity-50', 'pointer-events-none');
+                document.getElementById('key-warning').classList.remove('hidden');
             }
         };
 
@@ -357,32 +343,24 @@
             const key = document.getElementById('config-key').value.trim();
             const status = document.getElementById('config-status');
             if (!key) return;
-            status.className = "text-[11px] font-bold mt-6 text-center text-slate-400 animate-pulse";
-            status.innerText = "Mandanten-Key wird verifiziert...";
-            
+            status.innerText = "Prüfe...";
             try {
                 if (!auth.currentUser) await signInAnonymously(auth);
-                const keySnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'customer_keys', key));
-                if (keySnap.exists()) {
+                const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'customer_keys', key));
+                if (snap.exists()) {
                     localStorage.setItem('pd_customer_key', key);
-                    status.className = "text-[11px] font-bold mt-6 text-center text-green-600";
-                    status.innerText = "✓ Erfolgreich autorisiert!";
+                    status.innerText = "✓ Mandant verifiziert!";
                     setTimeout(() => { toggle('modal-config', false); updateUIForKey(key); }, 1000);
-                } else {
-                    status.className = "text-[11px] font-bold mt-6 text-center text-red-500";
-                    status.innerText = "Fehler: Schlüssel ungültig.";
-                }
+                } else { status.innerText = "Fehler: Key unbekannt."; }
             } catch(e) { status.innerText = "Verbindung fehlgeschlagen."; }
         };
 
-        // Auth
         onAuthStateChanged(auth, async (user) => {
             if (user && !user.isAnonymous) {
                 toggle('auth-screen', false); 
                 document.getElementById('app-shell').classList.remove('hidden');
                 document.getElementById('user-email-display').innerText = user.email;
-                document.getElementById('user-initials').innerText = (user.email || "U").substring(0,2);
-                
+                document.getElementById('user-initials').innerText = user.email.substring(0,2);
                 const profile = await getDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'profile'));
                 if (profile.exists()) companyId = profile.data().companyId || companyId;
                 document.getElementById('company-label').innerText = "Mandant: " + companyId;
@@ -390,95 +368,68 @@
             } else {
                 toggle('app-shell', false);
                 toggle('auth-screen', true); 
-                const savedKey = localStorage.getItem('pd_customer_key');
-                updateUIForKey(savedKey);
+                updateUIForKey(localStorage.getItem('pd_customer_key'));
             }
         });
 
         document.getElementById('btn-login').onclick = async () => {
             const e = document.getElementById('login-email').value;
             const p = document.getElementById('login-pass').value;
-            const err = document.getElementById('login-error');
             try { await signInWithEmailAndPassword(auth, e, p); }
-            catch(error) { err.innerText = "E-Mail oder Passwort nicht korrekt."; }
+            catch(err) { document.getElementById('login-error').innerText = "Login ungültig."; }
         };
 
         document.getElementById('btn-logout').onclick = () => signOut(auth).then(() => location.reload());
 
-        // Table
         async function loadTable() {
             const body = document.getElementById('results-body');
-            body.innerHTML = '<tr><td colspan="5" class="p-20 text-center"><div class="flex items-center justify-center gap-3 text-slate-300 font-black uppercase text-[10px] tracking-widest animate-pulse"><span>Synchronisiere</span><div class="w-1 h-1 bg-slate-300 rounded-full animate-bounce"></div><div class="w-1 h-1 bg-slate-300 rounded-full animate-bounce delay-75"></div><div class="w-1 h-1 bg-slate-300 rounded-full animate-bounce delay-150"></div></div></td></tr>';
+            body.innerHTML = '<tr><td colspan="5" class="p-10 text-center animate-pulse">Lade Bestand...</td></tr>';
             try {
                 const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'parts'));
                 body.innerHTML = '';
-                let found = 0;
                 snap.forEach(dSnap => {
                     const d = dSnap.data();
                     if (d.companyId === companyId) {
-                        found++;
                         const tr = document.createElement('tr');
-                        tr.className = "hover:bg-slate-50 transition-colors group";
-                        tr.innerHTML = `
-                            <td class="p-6 font-mono text-[13px] font-bold text-slate-900">${dSnap.id}</td>
-                            <td class="p-6">
-                                <div class="font-bold text-slate-700">${d.part_name || '-'}</div>
-                                ${d.replacement_code ? `<div class="text-[9px] text-orange-500 font-black uppercase mt-1 tracking-tighter">Nachfolger: ${d.replacement_code}</div>` : ''}
-                            </td>
-                            <td class="p-6 text-center"><span class="bg-slate-100 px-3 py-1.5 rounded-lg text-[10px] font-black text-slate-500 uppercase tracking-wider border border-slate-200">${d.location || '-'}</span></td>
-                            <td class="p-6 text-center font-black text-2xl text-slate-950 tabular-nums">${d.quantity || 0}</td>
-                            <td class="p-6 text-right">
-                                <button id="sel-${dSnap.id.replace(/\W/g, '_')}" class="bg-white border border-slate-200 text-slate-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all active:scale-95">Wählen</button>
-                            </td>`;
+                        tr.className = "hover:bg-slate-50 border-b";
+                        tr.innerHTML = `<td class="p-6 font-mono text-sm">${dSnap.id}</td><td class="p-6 font-bold">${d.part_name || '-'}</td><td class="p-6 text-center">${d.location || '-'}</td><td class="p-6 text-center font-black text-2xl">${d.quantity || 0}</td><td class="p-6 text-right"><button id="sel-${dSnap.id.replace(/\W/g,'_')}" class="bg-white border px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition">Wählen</button></td>`;
                         body.appendChild(tr);
-                        document.getElementById(`sel-${dSnap.id.replace(/\W/g, '_')}`).onclick = () => prepEdit(dSnap.id, d.part_name, d.quantity, d.location, d.packageSize);
+                        document.getElementById(`sel-${dSnap.id.replace(/\W/g,'_')}`).onclick = () => prepEdit(dSnap.id, d.part_name, d.quantity, d.location);
                     }
                 });
-                if (found === 0) body.innerHTML = '<tr><td colspan="5" class="p-32 text-center text-slate-300 italic font-medium">Keine Lagerdaten für Ihren Mandanten gefunden.</td></tr>';
-            } catch(e) { body.innerHTML = '<tr><td colspan="5" class="p-20 text-center text-red-500 font-bold">Zugriff verweigert (Firebase Rules prüfen).</td></tr>'; }
+            } catch(e) { body.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500">Berechtigung fehlt.</td></tr>'; }
         }
 
-        const prepEdit = (id, name, qty, loc, moq) => {
+        const prepEdit = (id, name, qty, loc) => {
             activeId = id; activeQty = qty;
             document.getElementById('edit-name').innerText = name;
             document.getElementById('edit-code-display').innerText = id;
             document.getElementById('edit-qty').innerText = qty;
             document.getElementById('edit-location').value = loc || '';
-            document.getElementById('edit-moq').innerText = moq || 1;
-            document.getElementById('edit-card').classList.remove('hidden');
-            document.getElementById('no-edit-msg').classList.add('hidden');
-            document.querySelectorAll('.nav-item').forEach(n => { if(n.getAttribute('data-page') === 'stock') n.click(); });
+            toggle('edit-card', true); toggle('no-edit-msg', false);
+            document.querySelector('[data-page="stock"]').click();
         };
 
         document.getElementById('btn-adj-minus').onclick = () => { activeQty--; document.getElementById('edit-qty').innerText = activeQty; };
         document.getElementById('btn-adj-plus').onclick = () => { activeQty++; document.getElementById('edit-qty').innerText = activeQty; };
-        
         document.getElementById('btn-save-edit').onclick = async () => {
-            if (!activeId) return;
-            try {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'parts', activeId), {
-                    quantity: activeQty, location: document.getElementById('edit-location').value
-                });
-                alert("Gespeichert!"); loadTable();
-                document.querySelectorAll('.nav-item').forEach(n => { if (n.getAttribute('data-page') === 'search') n.click(); });
-            } catch(e) { alert("Speichern fehlgeschlagen."); }
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'parts', activeId), {
+                quantity: activeQty, location: document.getElementById('edit-location').value
+            });
+            alert("Erfolg!"); loadTable(); document.querySelector('[data-page="search"]').click();
         };
 
-        // Navigation Page Logic
         document.querySelectorAll('.nav-item').forEach(btn => {
             btn.addEventListener('click', function() {
                 const p = this.getAttribute('data-page');
                 document.querySelectorAll('.content-page').forEach(page => page.classList.add('hidden'));
-                const target = document.getElementById('page-' + p);
-                if (target) target.classList.remove('hidden');
+                document.getElementById('page-' + p).classList.remove('hidden');
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
                 this.classList.add('active-nav');
             });
         });
 
         document.getElementById('btn-search-trigger').onclick = () => loadTable();
-
     </script>
 </body>
-</html>
 </html>
