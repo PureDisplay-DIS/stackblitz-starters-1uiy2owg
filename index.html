@@ -49,7 +49,7 @@
                 </button>
             </div>
 
-            <!-- Schritt 2: E-Mail & Passwort (initial versteckt) -->
+            <!-- Schritt 2: E-Mail & Passwort -->
             <div id="login-step-2" class="space-y-4 hidden">
                 <div class="text-center mb-4">
                     <p class="text-green-600 text-xs font-bold uppercase tracking-tight flex items-center justify-center gap-1">
@@ -85,8 +85,6 @@
 
     <!-- App Shell -->
     <div id="app-shell" class="flex h-full hidden">
-        
-        <!-- Sidebar -->
         <nav class="w-72 bg-slate-900 text-slate-400 flex flex-col shadow-2xl z-50">
             <div class="p-8 border-b border-slate-800">
                 <div class="flex items-center gap-3">
@@ -125,9 +123,7 @@
             </div>
         </nav>
 
-        <!-- Main Content Area -->
         <main class="flex-grow flex flex-col relative overflow-hidden bg-slate-50">
-            
             <!-- Seite 1: SUCHE -->
             <div id="page-search" class="content-page p-12 h-full flex flex-col">
                 <div class="mb-10">
@@ -166,25 +162,21 @@
             <!-- Seite 2: LAGERPFLEGE -->
             <div id="page-stock" class="content-page p-12 hidden">
                 <h2 class="text-4xl font-black text-slate-800 mb-10">Bestands- & Lagerpflege</h2>
-                
                 <div id="edit-card" class="bg-white p-12 rounded-[3rem] shadow-2xl border border-slate-100 max-w-4xl hidden relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-[100px] flex items-center justify-center">
                         <span class="text-4xl opacity-50">📦</span>
                     </div>
-                    
                     <div class="mb-10">
                         <h3 id="edit-name" class="text-3xl font-black text-slate-800 mb-2">-</h3>
                         <p id="edit-code" class="text-blue-500 font-mono font-bold text-lg tracking-tighter"></p>
                     </div>
-
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
                         <div>
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Lagerort (Location)</label>
                             <input type="text" id="edit-location" placeholder="z.B. Regal A-04" class="w-full p-5 bg-slate-50 border-2 border-slate-50 rounded-2xl font-bold text-lg outline-none focus:border-blue-500 focus:bg-white transition">
                         </div>
-                        
                         <div class="bg-slate-50/50 p-8 rounded-[2rem] text-center border-2 border-dashed border-slate-200">
-                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Physischer Bestand</label>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase mb-6">Physischer Bestand</label>
                             <div class="flex items-center justify-center gap-10">
                                 <button id="btn-adj-minus" class="w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center text-3xl font-black text-slate-800 hover:bg-slate-900 hover:text-white transition transform active:scale-90">-</button>
                                 <span id="edit-qty" class="text-7xl font-black text-slate-900 tabular-nums">0</span>
@@ -192,7 +184,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="mt-12 pt-8 border-t border-slate-50 flex justify-between items-center">
                         <div class="space-y-1">
                             <div class="text-[10px] text-slate-400 font-black uppercase">VPE (MOQ): <span id="edit-moq" class="text-slate-800">1</span></div>
@@ -203,7 +194,6 @@
                         </button>
                     </div>
                 </div>
-
                 <div id="no-edit-msg" class="h-96 flex flex-col items-center justify-center border-4 border-dashed border-slate-200 rounded-[3rem]">
                     <span class="text-6xl opacity-20 mb-4">🔎</span>
                     <p class="text-slate-400 font-bold text-lg">Wählen Sie ein Material in der Suche aus.</p>
@@ -216,14 +206,12 @@
                     <h2 class="text-4xl font-black text-slate-800 mb-2">Bestellabgleich</h2>
                     <p class="text-slate-500 font-medium">Vergleichen Sie eine Bestelldatei mit dem aktuellen Lagerbestand.</p>
                 </div>
-                
                 <div id="recon-upload" class="bg-white p-20 border-4 border-dashed border-slate-200 rounded-[3rem] text-center hover:bg-blue-50/50 hover:border-blue-400 transition cursor-pointer shadow-sm mb-10">
                     <input type="file" id="recon-file-input" accept=".xlsx, .xls" class="hidden">
                     <div class="text-6xl mb-6">📊</div>
                     <p class="text-2xl font-black text-slate-800 mb-2 tracking-tight">Bestelldatei (.xlsx) hochladen</p>
                     <p class="text-slate-400 font-medium">Gegenprüfung von material_code und Menge.</p>
                 </div>
-
                 <div id="recon-results" class="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 flex-grow overflow-hidden flex flex-col hidden">
                     <div class="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
                         <span class="text-sm font-black text-slate-500 uppercase">Abgleich-Ergebnis</span>
@@ -250,7 +238,6 @@
             <div id="page-order" class="content-page p-12 hidden h-full flex flex-col">
                 <h2 class="text-4xl font-black text-slate-800 mb-2">Master-Import</h2>
                 <p class="text-slate-500 mb-10">Aktualisieren Sie die Stammdaten für diesen Mandanten.</p>
-                
                 <div id="master-import-trigger" class="bg-white p-20 border-4 border-dashed border-slate-200 rounded-[3rem] text-center hover:bg-slate-900 hover:text-white transition-all cursor-pointer group">
                     <input type="file" id="excel-input" accept=".xlsx, .xls, .csv" class="hidden">
                     <div class="text-6xl mb-6 group-hover:scale-110 transition">📥</div>
@@ -275,7 +262,7 @@
     <div id="modal-impressum" class="fixed inset-0 modal-overlay z-[200] hidden items-center justify-center p-6">
         <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-lg">
             <h2 class="text-2xl font-black mb-6">Impressum</h2>
-            <div class="space-y-4 text-sm text-slate-600 leading-relaxed">
+            <div class="space-y-4 text-sm text-slate-600 leading-relaxed text-left">
                 <p><strong>PureDisplay DIS GmbH</strong><br>Murnau am Staffelsee, Deutschland</p>
                 <p>Vertretungsberechtigte Geschäftsführung: Martin Lemke</p>
                 <p>E-Mail: info@puredisplay.de<br>Web: www.puredisplay.de</p>
@@ -288,7 +275,7 @@
     <div id="modal-datenschutz" class="fixed inset-0 modal-overlay z-[200] hidden items-center justify-center p-6">
         <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-y-auto max-h-[80vh]">
             <h2 class="text-2xl font-black mb-6">Datenschutzerklärung</h2>
-            <div class="space-y-4 text-sm text-slate-600 leading-relaxed">
+            <div class="space-y-4 text-sm text-slate-600 leading-relaxed text-left">
                 <p>Wir nehmen den Schutz Ihrer Daten sehr ernst. Personenbezogene Daten werden auf dieser Plattform nur im technisch notwendigen Umfang (Login, Mandantenzuordnung) verarbeitet.</p>
                 <h3 class="font-bold text-slate-800">1. Datenerfassung</h3>
                 <p>Bei der Anmeldung speichern wir Ihre E-Mail-Adresse und den verknüpften Kundenschlüssel zur Identifizierung.</p>
@@ -306,7 +293,8 @@
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, query, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const apiKey = ""; // API Key bereitgestellt durch Umgebung
+        // Korrekter API Key für puredisplay-66e76
+        const apiKey = "AIzaSyDWXj3UpPlqvIZx80VqE7JPGSTqJgRY-0E"; 
         const firebaseConfig = {
             apiKey: apiKey,
             authDomain: "puredisplay-66e76.firebaseapp.com",
@@ -326,7 +314,6 @@
         let activeQty = 0;
         let isKeyValidated = false;
 
-        // --- GLOBAL FUNCTIONS & UI HELPERS ---
         const toggleModal = (id) => {
             const m = document.getElementById(id);
             if (m.classList.contains('hidden')) {
@@ -338,7 +325,7 @@
             }
         };
 
-        // Attach modal listeners (fixing module scope issues)
+        // Modal Button Listeners
         document.getElementById('btn-show-impressum').onclick = () => toggleModal('modal-impressum');
         document.getElementById('btn-show-datenschutz').onclick = () => toggleModal('modal-datenschutz');
         document.getElementById('footer-btn-impressum').onclick = () => toggleModal('modal-impressum');
@@ -346,10 +333,8 @@
         document.getElementById('btn-close-impressum').onclick = () => toggleModal('modal-impressum');
         document.getElementById('btn-close-datenschutz').onclick = () => toggleModal('modal-datenschutz');
 
-        // --- AUTH & MANDANT ---
         onAuthStateChanged(auth, async (user) => {
             if (user && (isKeyValidated || !user.isAnonymous)) {
-                // Falls bereits eingeloggt (Email/Pass), überspringe Schlüssel-Schritt
                 if (!user.isAnonymous) {
                     isKeyValidated = true;
                     document.getElementById('auth-screen').classList.add('hidden');
@@ -366,38 +351,21 @@
                     document.getElementById('company-label').innerText = "Mandant: " + companyId;
                     loadTable();
                 }
-            } else if (user && user.isAnonymous && !isKeyValidated) {
-                // Bleibe auf Schlüssel-Seite
             } else {
-                // Reset UI on Signout
                 document.getElementById('auth-screen').classList.remove('hidden');
                 document.getElementById('app-shell').classList.add('hidden');
-                document.getElementById('login-step-1').classList.remove('hidden');
-                document.getElementById('login-step-2').classList.add('hidden');
             }
         });
 
-        // Schritt 1: Key Validierung (Erfordert Rule-konforme anonyme Auth vorab)
         document.getElementById('btn-validate-key').addEventListener('click', async () => {
             const key = document.getElementById('login-key').value.trim();
             const err = document.getElementById('login-error');
-            
-            if (!key) {
-                err.innerText = "Bitte Kundenschlüssel eingeben.";
-                return;
-            }
-
+            if (!key) { err.innerText = "Bitte Kundenschlüssel eingeben."; return; }
             err.innerText = "Prüfe Zugangsberechtigung...";
-
             try {
-                // Rule 3: Erst anonym anmelden, um public data lesen zu dürfen
-                if (!auth.currentUser) {
-                    await signInAnonymously(auth);
-                }
-                
+                if (!auth.currentUser) { await signInAnonymously(auth); }
                 const keyRef = doc(db, 'artifacts', appId, 'public', 'data', 'customer_keys', key);
                 const keySnap = await getDoc(keyRef);
-                
                 if (keySnap.exists()) {
                     document.getElementById('login-step-1').classList.add('hidden');
                     document.getElementById('login-step-2').classList.remove('hidden');
@@ -409,61 +377,45 @@
                 }
             } catch (error) {
                 err.innerText = "Verbindungsfehler bei der Schlüsselprüfung.";
-                console.error(error);
             }
         });
 
-        // Schritt 2: Anmeldung
         document.getElementById('btn-login').addEventListener('click', async () => {
             const email = document.getElementById('login-email').value.trim();
             const pass = document.getElementById('login-pass').value;
             const err = document.getElementById('login-error');
-            
-            if (!email || !pass) {
-                err.innerText = "Bitte E-Mail und Passwort eingeben.";
-                return;
-            }
-
+            if (!email || !pass) { err.innerText = "Bitte E-Mail und Passwort eingeben."; return; }
             err.innerText = "Verifiziere Kontodaten...";
-
             try {
-                // Link anonymen User zu Email oder wechsle einfach
                 await signInWithEmailAndPassword(auth, email, pass);
-                // onAuthStateChanged übernimmt den Rest
             } catch (error) {
                 err.innerText = "Zugang verweigert. Prüfen Sie E-Mail und Passwort.";
             }
         });
 
-        document.getElementById('btn-back-to-key').addEventListener('click', () => {
+        document.getElementById('btn-back-to-key').onclick = () => {
             document.getElementById('login-step-1').classList.remove('hidden');
             document.getElementById('login-step-2').classList.add('hidden');
             document.getElementById('login-error').innerText = "";
             isKeyValidated = false;
-        });
+        };
 
-        document.getElementById('btn-logout').addEventListener('click', () => {
+        document.getElementById('btn-logout').onclick = () => {
             isKeyValidated = false;
             signOut(auth).then(() => location.reload());
-        });
-
-        // --- CORE LOGIK ---
+        };
 
         async function loadTable(filter = "") {
             const body = document.getElementById('results-body');
             body.innerHTML = '<tr><td colspan="5" class="p-20 text-center"><div class="animate-pulse font-black text-slate-300 uppercase text-[10px]">Synchronisiere Mandantendaten...</div></td></tr>';
-            
             const partsCol = collection(db, 'artifacts', appId, 'public', 'data', 'parts');
             const snap = await getDocs(partsCol);
             body.innerHTML = '';
-            
             let count = 0;
             snap.forEach(docSnap => {
                 const d = docSnap.data();
                 if(d.companyId !== companyId) return;
-                
                 if (filter && !docSnap.id.toLowerCase().includes(filter.toLowerCase()) && !d.part_name?.toLowerCase().includes(filter.toLowerCase())) return;
-                
                 count++;
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50 transition border-b border-slate-100 group";
@@ -484,7 +436,6 @@
                     prepEdit(docSnap.id, d.part_name, d.quantity || 0, d.location || '', d.replacement_code || '', d.packageSize || 1);
                 };
             });
-            
             if(count === 0) body.innerHTML = '<tr><td colspan="5" class="p-20 text-center text-slate-300 italic">Keine Einträge gefunden.</td></tr>';
         }
 
@@ -495,7 +446,6 @@
             document.getElementById('edit-qty').innerText = activeQty;
             document.getElementById('edit-location').value = loc || '';
             document.getElementById('edit-moq').innerText = moq || 1;
-            
             const replBox = document.getElementById('edit-repl-info');
             if(repl && repl !== 'undefined' && repl !== '') { 
                 replBox.innerText = "Achtung: Ersetzt durch " + repl; 
@@ -503,11 +453,8 @@
             } else { 
                 replBox.classList.add('hidden'); 
             }
-            
             document.getElementById('edit-card').classList.remove('hidden');
             document.getElementById('no-edit-msg').classList.add('hidden');
-            
-            // Switch Page
             document.querySelector('[data-page="stock"]').click();
         };
 
@@ -519,25 +466,18 @@
         document.getElementById('btn-adj-minus').onclick = () => adjust(-1);
         document.getElementById('btn-adj-plus').onclick = () => adjust(1);
 
-        document.getElementById('btn-save-edit').addEventListener('click', async () => {
+        document.getElementById('btn-save-edit').onclick = async () => {
             if(!activeId) return;
             const newLoc = document.getElementById('edit-location').value;
             const partRef = doc(db, 'artifacts', appId, 'public', 'data', 'parts', activeId);
-            
             try {
-                await updateDoc(partRef, {
-                    quantity: parseInt(activeQty),
-                    location: newLoc
-                });
+                await updateDoc(partRef, { quantity: parseInt(activeQty), location: newLoc });
                 alert("Daten erfolgreich in Cloud gespeichert.");
                 loadTable();
                 document.querySelector('[data-page="search"]').click();
-            } catch(e) {
-                alert("Fehler beim Speichern: Keine Berechtigung.");
-            }
-        });
+            } catch(e) { alert("Fehler beim Speichern: Keine Berechtigung."); }
+        };
 
-        // --- BESTELLABGLEICH ---
         document.getElementById('recon-upload').onclick = () => document.getElementById('recon-file-input').click();
         document.getElementById('recon-file-input').addEventListener('change', (e) => {
             const reader = new FileReader();
@@ -546,7 +486,6 @@
                 const workbook = XLSX.read(data, {type: 'array'});
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const json = XLSX.utils.sheet_to_json(sheet);
-                
                 const partsCol = collection(db, 'artifacts', appId, 'public', 'data', 'parts');
                 const snap = await getDocs(partsCol);
                 const currentStock = {};
@@ -554,24 +493,19 @@
                     const data = d.data();
                     if(data.companyId === companyId) currentStock[d.id] = data.quantity || 0;
                 });
-
                 const reconBody = document.getElementById('recon-body');
                 reconBody.innerHTML = '';
-                
                 json.forEach(row => {
                     const code = row['material_code'] || row['Material Code'] || row['ArtNr'];
                     if(!code) return;
                     const soll = parseInt(row['quantity'] || row['Menge'] || 0);
                     const ist = currentStock[code] || 0;
                     const diff = ist - soll;
-                    
                     const tr = document.createElement('tr');
                     tr.className = "border-b border-slate-50";
-                    
                     let statusHtml = (ist >= soll) 
                         ? '<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[9px] font-black">VORRÄTIG</span>' 
                         : '<span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-[9px] font-black">FEHLBESTAND</span>';
-
                     tr.innerHTML = `
                         <td class="p-5 font-mono text-xs font-bold">${code}</td>
                         <td class="p-5 font-bold tabular-nums">${soll}</td>
@@ -581,7 +515,6 @@
                     `;
                     reconBody.appendChild(tr);
                 });
-
                 document.getElementById('recon-upload').classList.add('hidden');
                 document.getElementById('recon-results').classList.remove('hidden');
             };
@@ -594,7 +527,6 @@
             document.getElementById('recon-file-input').value = '';
         };
 
-        // --- STAMMDATEN IMPORT ---
         document.getElementById('master-import-trigger').onclick = () => document.getElementById('excel-input').click();
         document.getElementById('excel-input').addEventListener('change', (e) => {
             const reader = new FileReader();
@@ -602,9 +534,7 @@
                 const data = new Uint8Array(ev.target.result);
                 const workbook = XLSX.read(data, {type: 'array'});
                 const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                
                 document.getElementById('import-status').innerText = "Verarbeite " + json.length + " Einträge...";
-
                 for(let row of json) {
                     const matCode = row['material_code'] || row['Material code'];
                     if(matCode) {
@@ -624,7 +554,6 @@
             reader.readAsArrayBuffer(e.target.files[0]);
         });
 
-        // Navigation UI
         document.querySelectorAll('.nav-item').forEach(btn => {
             btn.addEventListener('click', function() {
                 const p = this.getAttribute('data-page');
@@ -635,8 +564,7 @@
             });
         });
 
-        document.getElementById('btn-search-trigger').addEventListener('click', () => loadTable(document.getElementById('search-input').value));
-
+        document.getElementById('btn-search-trigger').onclick = () => loadTable(document.getElementById('search-input').value);
     </script>
 </body>
 </html>
