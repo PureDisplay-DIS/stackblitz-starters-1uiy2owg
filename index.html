@@ -1,23 +1,172 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <title>Home</title>
+<html lang="de">
+<head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <!--
-      Need a visual blank slate?
-      Remove all code in `styles.css`!
-    -->
-    <link rel="stylesheet" href="styles.css" />
-    <script type="module" src="script.js"></script>
-  </head>
-  <body>
-    <nav>
-      <a href="/" aria-current="page">Home</a>
-      <a href="/page2.html">Other page</a>
-    </nav>
-    <main>
-      <h1>Home page</h1>
-    </main>
-  </body>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PureDisplay - Parts</title>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+
+    <style>
+        :root { --sidebar-width: 260px; --primary-color: #2c3e50; --accent-color: #3498db; --bg-color: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg-color); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        .hidden { display: none !important; }
+        
+        /* AUTH SCREEN */
+        #auth-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; display: flex; align-items: center; justify-content: center; z-index: 9990; }
+        .login-card { background: white; padding: 40px; border-radius: 12px; width: 350px; text-align: center; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .login-logo { max-width: 180px; margin-bottom: 20px; display: block; margin-left: auto; margin-right: auto; }
+        .login-card h2 { margin-bottom: 5px; color: #2c3e50; }
+        .login-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .login-card button { width: 100%; padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .settings-link { position: absolute; bottom: 15px; right: 20px; font-size: 0.75rem; color: #bdc3c7; cursor: pointer; text-decoration: none; }
+
+        /* APP LAYOUT */
+        #app-shell { display: flex; flex-grow: 1; height: calc(100vh - 40px); width: 100%; }
+        .sidebar { width: var(--sidebar-width); background: var(--primary-color); color: #ecf0f1; display: flex; flex-direction: column; justify-content: space-between; }
+        .sidebar-top { flex-grow: 1; }
+        .sidebar h2 { padding: 25px 20px; text-align: center; color: var(--accent-color); border-bottom: 1px solid #34495e; margin: 0; }
+        .menu-label { padding: 20px 25px 5px; font-size: 0.7rem; text-transform: uppercase; color: #7f8c8d; }
+        .menu-item { padding: 12px 25px; cursor: pointer; border-left: 4px solid transparent; color: #bdc3c7; transition: 0.2s; }
+        .menu-item:hover, .menu-item.active { background: #34495e; color: white; }
+        .menu-item.active { border-left-color: var(--accent-color); }
+        
+        /* Logout Button 20px über Footer */
+        .logout-container { padding: 0 20px 20px 20px; } 
+        .logout-btn { background: #c0392b; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; }
+
+        .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; padding-bottom: 60px; }
+        .content-page { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); }
+
+        /* FOOTER */
+        .global-footer { position: fixed; bottom: 0; left: 0; width: 100%; height: 40px; background: #fff; border-top: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; box-sizing: border-box; font-size: 0.75rem; color: #7f8c8d; z-index: 9999; }
+        .footer-links span { cursor: pointer; margin-left: 15px; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10001; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 600px; max-width: 90%; max-height: 80vh; overflow-y: auto; position: relative; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-screen">
+        <div id="login-form" class="login-card">
+            <img src="logo.png" alt="" class="login-logo" onerror="this.style.display='none'">
+            <h2>PureDisplay - Parts</h2>
+            <p style="color: #7f8c8d; font-size: 0.9rem; margin-bottom: 25px;">Anmeldung erforderlich</p>
+            <input type="email" id="login-email" placeholder="E-Mail" />
+            <input type="password" id="login-pass" placeholder="Passwort" />
+            <button onclick="handleLogin()">Einloggen</button>
+            <p id="error-msg" style="color: #e74c3c; font-size: 0.85rem; margin-top: 15px"></p>
+            <a class="settings-link" onclick="toggleSettings(true)">⚙️ Setup</a>
+        </div>
+        <div id="settings-form" class="login-card hidden">
+            <h2>System-Setup</h2>
+            <input type="text" id="login-tenant" placeholder="Kundenschlüssel (z.B. HRF)" />
+            <button onclick="toggleSettings(false)" style="background: #95a5a6;">Zurück</button>
+        </div>
+    </div>
+
+    <div id="app-shell" class="hidden">
+        <nav class="sidebar">
+            <div class="sidebar-top">
+                <h2 id="display-tenant">PureDisplay</h2>
+                <span class="menu-label">Lager</span>
+                <div class="menu-item active" onclick="showPage('search', this)">Suche</div>
+                <div class="menu-item" onclick="showPage('stock', this)">Ein/Ausbuchen</div>
+                <div class="menu-item" onclick="showPage('order', this)">Bestandsabgleich</div>
+                <span class="menu-label">Datenpflege</span>
+                <div class="menu-item" onclick="showPage('admin', this)">Stammdaten-Update</div>
+            </div>
+            
+            <div class="logout-container">
+                <button class="logout-btn" onclick="logout()">Abmelden</button>
+            </div>
+        </nav>
+        <main class="main-content">
+            <div id="page-search" class="content-page">
+                <h1>Teilesuche</h1>
+                <input type="text" id="search-input" placeholder="Teilenummer..." style="padding: 10px; width: 250px" />
+                <button onclick="searchPart()" style="padding: 10px 20px; background: var(--accent-color); color: white; border: none; cursor: pointer;">Suchen</button>
+                <div id="search-result-container"></div>
+            </div>
+            </main>
+    </div>
+
+    <div id="modal-legal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <span onclick="toggleModal('legal', false)" style="position:absolute; top:15px; right:15px; cursor:pointer;">&times;</span>
+            <div id="legal-content"></div>
+        </div>
+    </div>
+
+    <footer class="global-footer">
+        <div>© 2026 PureDisplay DIS. Alle Rechte vorbehalten.</div>
+        <div class="footer-links">
+            <span onclick="showLegal('impressum')">Impressum</span>
+            <span onclick="showLegal('datenschutz')">Datenschutz</span>
+        </div>
+    </footer>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: 'AIzaSyDWXj3UpPlqvIZx80VqE7JPGSTqJgRY-0E',
+            authDomain: 'puredisplay-66e76.firebaseapp.com',
+            projectId: 'puredisplay-66e76',
+            storageBucket: 'puredisplay-66e76.firebasestorage.app',
+            messagingSenderId: '204186912930',
+            appId: '1:204186912930:web:5622e19fd3beb463aceffb',
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // AUTH & UI LOGIK
+        async function handleLogin() {
+            const t = document.getElementById('login-tenant').value.trim();
+            const e = document.getElementById('login-email').value.trim();
+            const p = document.getElementById('login-pass').value;
+            if(!t) return alert("Setup fehlt.");
+            try {
+                const cred = await auth.signInWithEmailAndPassword(e, p);
+                localStorage.setItem('puredisplay_last_tenant', t);
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('app-shell').classList.remove('hidden');
+                document.getElementById('display-tenant').innerText = t;
+            } catch(err) { document.getElementById('error-msg').innerText = err.message; }
+        }
+
+        function toggleSettings(show) {
+            document.getElementById('login-form').classList.toggle('hidden', show);
+            document.getElementById('settings-form').classList.toggle('hidden', !show);
+        }
+
+        function showPage(pId, el) {
+            document.querySelectorAll('.content-page').forEach(p => p.classList.add('hidden'));
+            if(document.getElementById('page-' + pId)) document.getElementById('page-' + pId).classList.remove('hidden');
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function logout() { auth.signOut().then(() => location.reload()); }
+        function toggleModal(id, s) { document.getElementById('modal-' + id).classList.toggle('hidden', !s); }
+
+        function showLegal(type) {
+            const content = document.getElementById('legal-content');
+            if(type === 'impressum') {
+                content.innerHTML = `<h3>Impressum</h3><p>PureDisplay DIS<br>Martin Lemke<br>Obermarkt 6<br>82418 Murnau</p>`;
+            } else {
+                content.innerHTML = `<h3>Datenschutz</h3><p>Diese App nutzt Firebase zur Datenverwaltung.</p>`;
+            }
+            toggleModal('legal', true);
+        }
+
+        window.onload = () => { 
+            const last = localStorage.getItem('puredisplay_last_tenant');
+            if(last) document.getElementById('login-tenant').value = last; 
+        };
+    </script>
+</body>
 </html>
