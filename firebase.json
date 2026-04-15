@@ -7,10 +7,17 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "trailingSlash": false,
+    "cleanUrls": true,
     "rewrites": [
       {
-        "source": "**",
-        "destination": "/index.html"
+        "source": "/parts/**",
+        "destination": "/parts/index.html"
+      },
+      {
+        "source": "/showroom/**",
+        "destination": "/showroom/index.html"
       }
     ]
   }
+}
