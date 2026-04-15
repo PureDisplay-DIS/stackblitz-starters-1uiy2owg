@@ -18,10 +18,10 @@
             --bg-color: #f4f7f6;
         }
 
-        body { font-family: sans-serif; margin: 0; background-color: var(--bg-color); height: 100vh; overflow: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg-color); height: 100vh; overflow: hidden; }
         .hidden { display: none !important; }
 
-        /* LOGIN OVERLAY */
+        /* LOGIN SCREEN */
         #auth-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #2c3e50; display: flex; align-items: center; justify-content: center; z-index: 9999;
@@ -30,78 +30,91 @@
             background: white; padding: 40px; border-radius: 12px; width: 350px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center;
         }
-        .login-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .login-card button { width: 100%; padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .login-card h3 { margin-top: 0; color: var(--primary-color); }
+        .login-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
+        .login-card button { width: 100%; padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; margin-top: 10px; }
+        .login-card button:hover { background: #2980b9; }
         
-        /* APP LAYOUT (Initial versteckt) */
+        /* APP LAYOUT */
         #app-shell { display: flex; height: 100vh; width: 100%; }
         
         .sidebar { width: var(--sidebar-width); background: var(--primary-color); color: var(--text-light); display: flex; flex-direction: column; }
-        .sidebar h2 { padding: 20px; text-align: center; color: var(--accent-color); margin: 0; }
+        .sidebar h2 { padding: 25px 20px; text-align: center; color: var(--accent-color); margin: 0; border-bottom: 1px solid #34495e; }
         
-        .menu-item { padding: 15px 25px; cursor: pointer; border-left: 4px solid transparent; transition: 0.2s; }
-        .menu-item:hover { background: #34495e; }
-        .menu-item.active { background: #34495e; border-left-color: var(--accent-color); }
+        .menu-label { padding: 20px 25px 5px; font-size: 0.7rem; text-transform: uppercase; color: #7f8c8d; letter-spacing: 1px; }
+        .menu-item { padding: 12px 25px; cursor: pointer; border-left: 4px solid transparent; transition: 0.2s; color: #bdc3c7; }
+        .menu-item:hover { background: #34495e; color: white; }
+        .menu-item.active { background: #34495e; border-left-color: var(--accent-color); color: white; }
 
         .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; }
-        .content-page { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .content-page { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); min-height: 400px; }
     </style>
 </head>
 <body>
 
     <div id="auth-screen">
         <div class="login-card">
-            <img src="https://via.placeholder.com/150x50?text=PureDisplay" alt="Logo" style="margin-bottom: 20px;">
-            <h3>Anmelden</h3>
+            <h2 style="color: #3498db; margin-bottom: 5px;">PureDisplay</h2>
+            <p style="margin-bottom: 25px; color: #7f8c8d;">Parts Importer & Inventory</p>
+            
             <input type="text" id="login-tenant" placeholder="Kundenschlüssel (z.B. HRF)">
             <input type="email" id="login-email" placeholder="E-Mail">
             <input type="password" id="login-pass" placeholder="Passwort">
+            
             <button onclick="handleLogin()">Einloggen</button>
-            <p id="error-msg" style="color: red; font-size: 0.8rem; margin-top: 10px;"></p>
+            <p id="error-msg" style="color: #e74c3c; font-size: 0.85rem; margin-top: 15px; min-height: 1.2rem;"></p>
         </div>
     </div>
 
     <div id="app-shell" class="hidden">
         <nav class="sidebar">
             <h2 id="display-tenant">PureDisplay</h2>
-            <div style="margin-top: 20px;">
-                <div class="menu-item active" onclick="showPage('search')">Suche</div>
-                <div class="menu-item" onclick="showPage('stock')">Bestand ein/ausbuchen</div>
-                <div class="menu-item" onclick="showPage('order')">Bestandsabgleich</div>
-                <div class="menu-item" onclick="showPage('admin')">Stammdaten-Update</div>
-            </div>
-            <div style="margin-top: auto; padding: 20px;">
-                <p style="font-size: 0.7rem; color: #95a5a6;">Software: v1.0.2 Beta</p>
-                <button onclick="logout()" style="width:100%; background: #e74c3c; color: white; border:none; padding: 8px; border-radius: 4px; cursor:pointer;">Abmelden</button>
+            
+            <span class="menu-label">Teileinformationen</span>
+            <div class="menu-item active" onclick="showPage('search', this)">Suche</div>
+
+            <span class="menu-label">Lagerverwaltung</span>
+            <div class="menu-item" onclick="showPage('stock', this)">Bestand ein/ausbuchen</div>
+            <div class="menu-item" onclick="showPage('order', this)">Bestandsabgleich</div>
+
+            <span class="menu-label">Administration</span>
+            <div class="menu-item" onclick="showPage('admin', this)">Stammdaten-Update</div>
+            
+            <div style="margin-top: auto; padding: 20px; border-top: 1px solid #34495e;">
+                <p style="font-size: 0.7rem; color: #7f8c8d; margin-bottom: 10px;">Build: 2026.04.14-Alpha</p>
+                <button onclick="logout()" style="width:100%; background: #c0392b; color: white; border:none; padding: 8px; border-radius: 4px; cursor:pointer;">Abmelden</button>
             </div>
         </nav>
 
         <main class="main-content">
             <div id="page-search" class="content-page">
                 <h1>Teilesuche</h1>
-                <input type="text" id="search-input" placeholder="Teilenummer eingeben...">
-                <button>Suchen</button>
+                <hr>
+                <div style="margin-top: 20px;">
+                    <input type="text" id="search-input" placeholder="Teilenummer eingeben..." style="padding: 10px; width: 250px;">
+                    <button style="padding: 10px 20px; background: var(--accent-color); color: white; border: none; cursor: pointer;">Suchen</button>
+                </div>
             </div>
 
             <div id="page-stock" class="content-page hidden">
-                <h1>Lagerverwaltung</h1>
-                <p>Mengen anpassen...</p>
+                <h1>Bestandsmanagement</h1>
+                <p>Hier können Sie Bestände manuell erhöhen oder reduzieren.</p>
             </div>
             
             <div id="page-order" class="content-page hidden">
                 <h1>Bestandsabgleich</h1>
-                <p>CSV hochladen für Abgleich...</p>
+                <p>Laden Sie eine CSV-Bestelldatei hoch, um sie gegen das Live-Lager zu prüfen.</p>
             </div>
 
             <div id="page-admin" class="content-page hidden">
                 <h1>Stammdaten-Update</h1>
-                <p>CSV für Teilekatalog hochladen...</p>
+                <p>Hochladen der großen Master-CSV zur Aktualisierung der Katalogdaten.</p>
             </div>
         </main>
     </div>
 
     <script>
-        // FIREBASE CONFIG (BITTE HIER DEINE DATEN EINSETZEN)
+        // FIREBASE CONFIGURATION (Eingebaut aus deinen Daten)
         const firebaseConfig = {
             apiKey: "AIzaSyDWXj3UpPlqvIZx80VqE7JPGSTqJgRY-0E",
             authDomain: "puredisplay-66e76.firebaseapp.com",
@@ -111,6 +124,7 @@
             appId: "1:204186912930:web:5622e19fd3beb463aceffb"
         };
 
+        // Initialisierung
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
@@ -128,22 +142,26 @@
             }
 
             try {
+                errorDiv.style.color = "#3498db";
+                errorDiv.innerText = "Anmeldung läuft...";
+                
                 const userCredential = await auth.signInWithEmailAndPassword(email, pass);
                 const user = userCredential.user;
 
-                // Datenbank-Check: Stimmt der Mandant?
+                // Datenbank-Check: Stimmt der Mandant mit dem User-Eintrag überein?
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 
                 if (userDoc.exists && userDoc.data().tenantKey === tenant) {
-                    // Erfolg: Login verstecken, App zeigen
                     localStorage.setItem('puredisplay_last_tenant', tenant);
                     initApp(tenant);
                 } else {
                     await auth.signOut();
-                    errorDiv.innerText = "Falscher Kundenschlüssel für diesen Account.";
+                    errorDiv.style.color = "#e74c3c";
+                    errorDiv.innerText = "Zugriff verweigert: Falscher Kundenschlüssel.";
                 }
             } catch (error) {
-                errorDiv.innerText = "Login fehlgeschlagen: " + error.message;
+                errorDiv.style.color = "#e74c3c";
+                errorDiv.innerText = "Fehler: " + error.message;
             }
         }
 
@@ -154,17 +172,22 @@
         }
 
         function logout() {
-            auth.signOut().then(() => location.reload());
+            auth.signOut().then(() => {
+                location.reload();
+            });
         }
 
-        function showPage(pageId) {
+        function showPage(pageId, element) {
+            // Seiten umschalten
             document.querySelectorAll('.content-page').forEach(p => p.classList.add('hidden'));
-            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
             document.getElementById('page-' + pageId).classList.remove('hidden');
-            event.currentTarget.classList.add('active');
+            
+            // Sidebar Styling umschalten
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            element.classList.add('active');
         }
 
-        // Automatisches Ausfüllen des letzten Mandanten
+        // Letzten Mandanten automatisch laden
         window.onload = () => {
             const lastTenant = localStorage.getItem('puredisplay_last_tenant');
             if(lastTenant) document.getElementById('login-tenant').value = lastTenant;
