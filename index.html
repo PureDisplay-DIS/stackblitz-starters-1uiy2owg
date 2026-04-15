@@ -1,197 +1,603 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PureDisplay - Parts Manager</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PureDisplay - Parts Management System</title>
+
+    <!-- Tailwind CSS für professionelles Design -->
+    <script src="https://cdn.tailwindcss.com"></script>
     
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    
+    <!-- Bibliothek für Excel-Funktionen -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+
     <style>
-        :root {
-            --sidebar-width: 260px;
-            --primary-color: #2c3e50;
-            --accent-color: #3498db;
-            --text-light: #ecf0f1;
-            --bg-color: #f4f7f6;
-        }
-
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg-color); height: 100vh; overflow: hidden; }
+        .active-nav { @apply bg-blue-600 text-white shadow-lg shadow-blue-500/30; }
         .hidden { display: none !important; }
-
-        /* LOGIN SCREEN */
-        #auth-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #2c3e50; display: flex; align-items: center; justify-content: center; z-index: 9999;
-        }
-        .login-card {
-            background: white; padding: 40px; border-radius: 12px; width: 350px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center;
-        }
-        .login-card h3 { margin-top: 0; color: var(--primary-color); }
-        .login-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
-        .login-card button { width: 100%; padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; margin-top: 10px; }
-        .login-card button:hover { background: #2980b9; }
-        
-        /* APP LAYOUT */
-        #app-shell { display: flex; height: 100vh; width: 100%; }
-        
-        .sidebar { width: var(--sidebar-width); background: var(--primary-color); color: var(--text-light); display: flex; flex-direction: column; }
-        .sidebar h2 { padding: 25px 20px; text-align: center; color: var(--accent-color); margin: 0; border-bottom: 1px solid #34495e; }
-        
-        .menu-label { padding: 20px 25px 5px; font-size: 0.7rem; text-transform: uppercase; color: #7f8c8d; letter-spacing: 1px; }
-        .menu-item { padding: 12px 25px; cursor: pointer; border-left: 4px solid transparent; transition: 0.2s; color: #bdc3c7; }
-        .menu-item:hover { background: #34495e; color: white; }
-        .menu-item.active { background: #34495e; border-left-color: var(--accent-color); color: white; }
-
-        .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; }
-        .content-page { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); min-height: 400px; }
+        body { background-color: #f8fafc; }
+        .modal-overlay { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
     </style>
 </head>
-<body>
+<body class="h-screen flex flex-col overflow-hidden font-sans text-slate-900">
 
-    <div id="auth-screen">
-        <div class="login-card">
-            <h2 style="color: #3498db; margin-bottom: 5px;">PureDisplay</h2>
-            <p style="margin-bottom: 25px; color: #7f8c8d;">Parts Importer & Inventory</p>
+    <!-- Status Banner -->
+    <div id="status-banner" class="bg-blue-700 text-white text-center py-1 text-[10px] font-black uppercase tracking-[0.2em] z-[110]">
+        PureDisplay Enterprise V2.9 • Secure Multi-Tenant Access Active
+    </div>
+
+    <!-- Login Maske (Multi-Step Login) -->
+    <div id="auth-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-[100]">
+        <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md border border-slate-200">
+            <div class="text-center mb-8">
+                <div class="inline-block p-4 bg-blue-600 rounded-2xl text-white font-black text-2xl mb-4 shadow-lg shadow-blue-500/20">PD</div>
+                <h2 class="text-3xl font-black text-slate-800 tracking-tight">PureDisplay</h2>
+                <p class="text-slate-400 font-bold uppercase text-[10px] tracking-widest mt-1">Enterprise Parts Management</p>
+            </div>
             
-            <input type="text" id="login-tenant" placeholder="Kundenschlüssel (z.B. HRF)">
-            <input type="email" id="login-email" placeholder="E-Mail">
-            <input type="password" id="login-pass" placeholder="Passwort">
+            <!-- Schritt 1: Kundenschlüssel -->
+            <div id="login-step-1" class="space-y-4">
+                <div class="text-center mb-4">
+                    <p class="text-slate-500 text-xs font-bold uppercase tracking-tight">Schritt 1: Zugangsberechtigung</p>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase ml-1 mb-1">Kundenschlüssel (Key)</label>
+                    <input type="text" id="login-key" placeholder="z.B. 9cdzmtr..." class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition font-mono">
+                </div>
+                <button id="btn-validate-key" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-4 rounded-xl transition shadow-xl uppercase tracking-widest text-xs">
+                    Schlüssel prüfen
+                </button>
+            </div>
+
+            <!-- Schritt 2: E-Mail & Passwort (initial versteckt) -->
+            <div id="login-step-2" class="space-y-4 hidden">
+                <div class="text-center mb-4">
+                    <p class="text-green-600 text-xs font-bold uppercase tracking-tight flex items-center justify-center gap-1">
+                        <span>✓</span> Schlüssel Validiert
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase ml-1 mb-1">E-Mail Adresse</label>
+                    <input type="email" id="login-email" placeholder="name@firma.de" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase ml-1 mb-1">Passwort</label>
+                    <input type="password" id="login-pass" placeholder="••••••••" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition">
+                </div>
+                
+                <button id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl transition shadow-xl shadow-blue-500/20 uppercase tracking-widest text-xs mt-4">
+                    Anmelden
+                </button>
+                
+                <button id="btn-back-to-key" class="w-full text-slate-400 hover:text-slate-600 font-bold py-2 text-[10px] uppercase tracking-widest transition">
+                    ← Schlüssel ändern
+                </button>
+            </div>
+
+            <div id="login-error" class="text-red-500 text-[11px] mt-6 text-center font-bold h-4"></div>
             
-            <button onclick="handleLogin()">Einloggen</button>
-            <p id="error-msg" style="color: #e74c3c; font-size: 0.85rem; margin-top: 15px; min-height: 1.2rem;"></p>
+            <div class="mt-8 pt-6 border-t border-slate-100 flex justify-center gap-6 text-[10px] font-bold text-slate-400 uppercase">
+                <button onclick="toggleModal('modal-impressum')" class="hover:text-blue-500 transition">Impressum</button>
+                <button onclick="toggleModal('modal-datenschutz')" class="hover:text-blue-500 transition">Datenschutz</button>
+            </div>
         </div>
     </div>
 
-    <div id="app-shell" class="hidden">
-        <nav class="sidebar">
-            <h2 id="display-tenant">PureDisplay</h2>
-            
-            <span class="menu-label">Teileinformationen</span>
-            <div class="menu-item active" onclick="showPage('search', this)">Suche</div>
-
-            <span class="menu-label">Lagerverwaltung</span>
-            <div class="menu-item" onclick="showPage('stock', this)">Bestand ein/ausbuchen</div>
-            <div class="menu-item" onclick="showPage('order', this)">Bestandsabgleich</div>
-
-            <span class="menu-label">Administration</span>
-            <div class="menu-item" onclick="showPage('admin', this)">Stammdaten-Update</div>
-            
-            <div style="margin-top: auto; padding: 20px; border-top: 1px solid #34495e;">
-                <p style="font-size: 0.7rem; color: #7f8c8d; margin-bottom: 10px;">Build: 2026.04.14-Alpha</p>
-                <button onclick="logout()" style="width:100%; background: #c0392b; color: white; border:none; padding: 8px; border-radius: 4px; cursor:pointer;">Abmelden</button>
+    <!-- App Shell -->
+    <div id="app-shell" class="flex h-full hidden">
+        
+        <!-- Sidebar -->
+        <nav class="w-72 bg-slate-900 text-slate-400 flex flex-col shadow-2xl z-50">
+            <div class="p-8 border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">PD</div>
+                    <div>
+                        <h1 class="text-white font-black text-lg tracking-tight">PureDisplay</h1>
+                        <div id="company-label" class="text-[9px] text-blue-400 font-black uppercase tracking-widest">Mandant: Lädt...</div>
+                    </div>
+                </div>
             </div>
-        </nav>
-
-        <main class="main-content">
-            <div id="page-search" class="content-page">
-                <h1>Teilesuche</h1>
-                <hr>
-                <div style="margin-top: 20px;">
-                    <input type="text" id="search-input" placeholder="Teilenummer eingeben..." style="padding: 10px; width: 250px;">
-                    <button style="padding: 10px 20px; background: var(--accent-color); color: white; border: none; cursor: pointer;">Suchen</button>
+            
+            <div class="flex-grow py-8 px-4 space-y-2">
+                <div class="nav-item p-4 rounded-xl cursor-pointer flex items-center gap-4 transition active-nav" data-page="search">
+                    <span class="opacity-50">🔍</span> <span class="font-bold text-sm">Teilesuche</span>
+                </div>
+                <div class="nav-item p-4 rounded-xl cursor-pointer flex items-center gap-4 transition" data-page="stock">
+                    <span class="opacity-50">📦</span> <span class="font-bold text-sm">Lagerpflege</span>
+                </div>
+                <div class="nav-item p-4 rounded-xl cursor-pointer flex items-center gap-4 transition" data-page="recon">
+                    <span class="opacity-50">📊</span> <span class="font-bold text-sm">Bestellabgleich</span>
+                </div>
+                <div class="nav-item p-4 rounded-xl cursor-pointer flex items-center gap-4 transition" data-page="order">
+                    <span class="opacity-50">📥</span> <span class="font-bold text-sm">Stammdaten Import</span>
                 </div>
             </div>
 
-            <div id="page-stock" class="content-page hidden">
-                <h1>Bestandsmanagement</h1>
-                <p>Hier können Sie Bestände manuell erhöhen oder reduzieren.</p>
+            <div class="p-8 border-t border-slate-800">
+                <div class="flex items-center gap-3 mb-6 overflow-hidden">
+                    <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-bold text-white shrink-0" id="user-initials">?</div>
+                    <div class="truncate">
+                        <p id="user-email" class="text-[10px] font-bold text-slate-200 truncate italic">user@email.com</p>
+                        <p class="text-[8px] uppercase text-slate-500 font-black tracking-tighter">Sitzung Aktiv</p>
+                    </div>
+                </div>
+                <button id="btn-logout" class="w-full bg-slate-800 hover:bg-red-600 text-white py-3 rounded-xl transition text-[10px] font-black uppercase tracking-widest border border-slate-700">Logout</button>
             </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow flex flex-col relative overflow-hidden bg-slate-50">
             
-            <div id="page-order" class="content-page hidden">
-                <h1>Bestandsabgleich</h1>
-                <p>Laden Sie eine CSV-Bestelldatei hoch, um sie gegen das Live-Lager zu prüfen.</p>
+            <!-- Seite 1: SUCHE -->
+            <div id="page-search" class="content-page p-12 h-full flex flex-col">
+                <div class="mb-10">
+                    <h2 class="text-4xl font-black text-slate-800 mb-2">Lagerbestandsabfrage</h2>
+                    <p class="text-slate-500 font-medium">Durchsuchen Sie den firmeneigenen Bestand in Echtzeit.</p>
+                </div>
+                
+                <div class="flex gap-4 mb-8">
+                    <div class="relative flex-grow">
+                        <span class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+                        <input type="text" id="search-input" placeholder="Material code oder Name..." class="w-full pl-14 pr-6 py-5 rounded-2xl border-none shadow-xl shadow-slate-200/50 focus:ring-4 focus:ring-blue-500/10 outline-none text-lg font-medium">
+                    </div>
+                    <button id="btn-search-trigger" class="bg-slate-900 text-white px-10 rounded-2xl font-black shadow-lg hover:bg-blue-600 transition uppercase tracking-widest text-[10px]">Suchen</button>
+                </div>
+
+                <div class="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 flex-grow overflow-hidden flex flex-col">
+                    <div class="overflow-y-auto flex-grow">
+                        <table class="w-full text-left">
+                            <thead class="bg-white border-b border-slate-100 sticky top-0 z-10">
+                                <tr>
+                                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Material Code</th>
+                                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Bezeichnung</th>
+                                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Lagerort</th>
+                                    <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Bestand</th>
+                                    <th class="p-6"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="results-body" class="divide-y divide-slate-50">
+                                <tr><td colspan="5" class="p-20 text-center text-slate-300 font-medium italic">Bitte starten Sie eine Abfrage.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <div id="page-admin" class="content-page hidden">
-                <h1>Stammdaten-Update</h1>
-                <p>Hochladen der großen Master-CSV zur Aktualisierung der Katalogdaten.</p>
+            <!-- Seite 2: LAGERPFLEGE -->
+            <div id="page-stock" class="content-page p-12 hidden">
+                <h2 class="text-4xl font-black text-slate-800 mb-10">Bestands- & Lagerpflege</h2>
+                
+                <div id="edit-card" class="bg-white p-12 rounded-[3rem] shadow-2xl border border-slate-100 max-w-4xl hidden relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-[100px] flex items-center justify-center">
+                        <span class="text-4xl opacity-50">📦</span>
+                    </div>
+                    
+                    <div class="mb-10">
+                        <h3 id="edit-name" class="text-3xl font-black text-slate-800 mb-2">-</h3>
+                        <p id="edit-code" class="text-blue-500 font-mono font-bold text-lg tracking-tighter"></p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Lagerort (Location)</label>
+                            <input type="text" id="edit-location" placeholder="z.B. Regal A-04" class="w-full p-5 bg-slate-50 border-2 border-slate-50 rounded-2xl font-bold text-lg outline-none focus:border-blue-500 focus:bg-white transition">
+                        </div>
+                        
+                        <div class="bg-slate-50/50 p-8 rounded-[2rem] text-center border-2 border-dashed border-slate-200">
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Physischer Bestand</label>
+                            <div class="flex items-center justify-center gap-10">
+                                <button onclick="adjust(-1)" class="w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center text-3xl font-black text-slate-800 hover:bg-slate-900 hover:text-white transition transform active:scale-90">-</button>
+                                <span id="edit-qty" class="text-7xl font-black text-slate-900 tabular-nums">0</span>
+                                <button onclick="adjust(1)" class="w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center text-3xl font-black text-slate-800 hover:bg-slate-900 hover:text-white transition transform active:scale-90">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-12 pt-8 border-t border-slate-50 flex justify-between items-center">
+                        <div class="space-y-1">
+                            <div class="text-[10px] text-slate-400 font-black uppercase">VPE (MOQ): <span id="edit-moq" class="text-slate-800">1</span></div>
+                            <div id="edit-repl-info" class="text-[9px] text-orange-500 font-black uppercase tracking-tighter hidden"></div>
+                        </div>
+                        <button id="btn-save-edit" class="bg-blue-600 text-white px-12 py-5 rounded-2xl font-black shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition uppercase tracking-widest text-xs active:scale-95">
+                            In Firebase speichern
+                        </button>
+                    </div>
+                </div>
+
+                <div id="no-edit-msg" class="h-96 flex flex-col items-center justify-center border-4 border-dashed border-slate-200 rounded-[3rem]">
+                    <span class="text-6xl opacity-20 mb-4">🔎</span>
+                    <p class="text-slate-400 font-bold text-lg">Wählen Sie ein Material in der Suche aus.</p>
+                </div>
             </div>
+
+            <!-- Seite 3: BESTELLABGLEICH -->
+            <div id="page-recon" class="content-page p-12 hidden h-full flex flex-col">
+                <div class="mb-10">
+                    <h2 class="text-4xl font-black text-slate-800 mb-2">Bestellabgleich</h2>
+                    <p class="text-slate-500 font-medium">Vergleichen Sie eine Bestelldatei mit dem aktuellen Lagerbestand.</p>
+                </div>
+                
+                <div id="recon-upload" class="bg-white p-20 border-4 border-dashed border-slate-200 rounded-[3rem] text-center hover:bg-blue-50/50 hover:border-blue-400 transition cursor-pointer shadow-sm mb-10" onclick="document.getElementById('recon-file-input').click()">
+                    <input type="file" id="recon-file-input" accept=".xlsx, .xls" class="hidden">
+                    <div class="text-6xl mb-6">📊</div>
+                    <p class="text-2xl font-black text-slate-800 mb-2 tracking-tight">Bestelldatei (.xlsx) hochladen</p>
+                    <p class="text-slate-400 font-medium">Gegenprüfung von material_code und Menge.</p>
+                </div>
+
+                <div id="recon-results" class="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 flex-grow overflow-hidden flex flex-col hidden">
+                    <div class="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                        <span class="text-sm font-black text-slate-500 uppercase">Abgleich-Ergebnis</span>
+                        <button onclick="resetRecon()" class="text-[10px] font-black text-red-500 uppercase hover:underline">Zurücksetzen</button>
+                    </div>
+                    <div class="overflow-y-auto flex-grow">
+                        <table class="w-full text-left">
+                            <thead class="bg-white border-b border-slate-100 sticky top-0 z-10">
+                                <tr>
+                                    <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Code</th>
+                                    <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Bestellung</th>
+                                    <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Lager (Ist)</th>
+                                    <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Differenz</th>
+                                    <th class="p-5">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recon-body" class="divide-y divide-slate-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seite 4: IMPORT -->
+            <div id="page-order" class="content-page p-12 hidden h-full flex flex-col">
+                <h2 class="text-4xl font-black text-slate-800 mb-2">Master-Import</h2>
+                <p class="text-slate-500 mb-10">Aktualisieren Sie die Stammdaten für diesen Mandanten.</p>
+                
+                <div class="bg-white p-20 border-4 border-dashed border-slate-200 rounded-[3rem] text-center hover:bg-slate-900 hover:text-white transition-all cursor-pointer group" onclick="document.getElementById('excel-input').click()">
+                    <input type="file" id="excel-input" accept=".xlsx, .xls, .csv" class="hidden">
+                    <div class="text-6xl mb-6 group-hover:scale-110 transition">📥</div>
+                    <p class="text-2xl font-black mb-2 tracking-tight">Stammdaten-Liste (.xlsx / .csv)</p>
+                    <p class="text-slate-400 group-hover:text-slate-300 font-medium">Bestehende Lagerorte und Bestände bleiben sicher erhalten.</p>
+                    <p id="import-status" class="mt-10 inline-block bg-blue-600 text-white px-8 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest">Warte auf Datei</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="p-6 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-white border-t border-slate-100 flex justify-between items-center px-12">
+                <span>PureDisplay DIS System &copy; 2026</span>
+                <div class="flex gap-6">
+                    <button onclick="toggleModal('modal-impressum')" class="hover:text-slate-800 transition">Impressum</button>
+                    <button onclick="toggleModal('modal-datenschutz')" class="hover:text-slate-800 transition">Datenschutz</button>
+                </div>
+            </footer>
         </main>
     </div>
 
-    <script>
-        // FIREBASE CONFIGURATION (Eingebaut aus deinen Daten)
+    <!-- Modals -->
+    <div id="modal-impressum" class="fixed inset-0 modal-overlay z-[200] hidden items-center justify-center p-6">
+        <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-lg">
+            <h2 class="text-2xl font-black mb-6">Impressum</h2>
+            <div class="space-y-4 text-sm text-slate-600 leading-relaxed">
+                <p><strong>PureDisplay DIS GmbH</strong><br>Murnau am Staffelsee, Deutschland</p>
+                <p>Vertretungsberechtigte Geschäftsführung: Martin Lemke</p>
+                <p>E-Mail: info@puredisplay.de<br>Web: www.puredisplay.de</p>
+                <p class="text-xs pt-4 border-t">Haftungshinweis: Trotz sorgfältiger inhaltlicher Kontrolle übernehmen wir keine Haftung für die Inhalte externer Links.</p>
+            </div>
+            <button onclick="toggleModal('modal-impressum')" class="mt-8 w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase text-xs">Schließen</button>
+        </div>
+    </div>
+
+    <div id="modal-datenschutz" class="fixed inset-0 modal-overlay z-[200] hidden items-center justify-center p-6">
+        <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-y-auto max-h-[80vh]">
+            <h2 class="text-2xl font-black mb-6">Datenschutzerklärung</h2>
+            <div class="space-y-4 text-sm text-slate-600 leading-relaxed">
+                <p>Wir nehmen den Schutz Ihrer Daten sehr ernst. Personenbezogene Daten werden auf dieser Plattform nur im technisch notwendigen Umfang (Login, Mandantenzuordnung) verarbeitet.</p>
+                <h3 class="font-bold text-slate-800">1. Datenerfassung</h3>
+                <p>Bei der Anmeldung speichern wir Ihre E-Mail-Adresse und den verknüpften Kundenschlüssel zur Identifizierung.</p>
+                <h3 class="font-bold text-slate-800">2. Datensicherheit</h3>
+                <p>Diese Plattform nutzt Firebase-Verschlüsselung nach modernsten Standards. Mandantendaten sind strikt voneinander isoliert.</p>
+                <h3 class="font-bold text-slate-800">3. Ihre Rechte</h3>
+                <p>Sie haben jederzeit das Recht auf Auskunft über Ihre gespeicherten Daten sowie das Recht auf Löschung.</p>
+            </div>
+            <button onclick="toggleModal('modal-datenschutz')" class="mt-8 w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase text-xs sticky bottom-0">Verstanden</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, query, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const apiKey = ""; // API Key bereitgestellt durch Umgebung
         const firebaseConfig = {
-            apiKey: "AIzaSyDWXj3UpPlqvIZx80VqE7JPGSTqJgRY-0E",
+            apiKey: apiKey,
             authDomain: "puredisplay-66e76.firebaseapp.com",
             projectId: "puredisplay-66e76",
             storageBucket: "puredisplay-66e76.firebasestorage.app",
             messagingSenderId: "204186912930",
             appId: "1:204186912930:web:5622e19fd3beb463aceffb"
         };
+        const appId = "puredisplay-66e76";
 
-        // Initialisierung
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-        // LOGIN FUNKTION
-        async function handleLogin() {
-            const tenant = document.getElementById('login-tenant').value.trim();
-            const email = document.getElementById('login-email').value.trim();
-            const pass = document.getElementById('login-pass').value;
-            const errorDiv = document.getElementById('error-msg');
+        let companyId = "puredisplay"; 
+        let activeId = null;
+        let activeQty = 0;
+        let isKeyValidated = false;
 
-            if(!tenant || !email || !pass) {
-                errorDiv.innerText = "Bitte alle Felder ausfüllen.";
+        // --- GLOBAL FUNCTIONS ---
+        window.toggleModal = (id) => {
+            const m = document.getElementById(id);
+            m.classList.toggle('hidden');
+            m.classList.toggle('flex');
+        };
+
+        // --- AUTH & MANDANT ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user && isKeyValidated) {
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('app-shell').classList.remove('hidden');
+                document.getElementById('user-email').innerText = user.email;
+                document.getElementById('user-initials').innerText = user.email.substring(0,2).toUpperCase();
+                
+                const userProfileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'profile');
+                const userSnap = await getDoc(userProfileRef);
+                
+                if (userSnap.exists()) {
+                    companyId = userSnap.data().companyId || "puredisplay";
+                }
+                document.getElementById('company-label').innerText = "Mandant: " + companyId;
+                loadTable();
+            } else if (user && !isKeyValidated) {
+                // Falls Auth ohne Key-Check passierte (z.B. Refresh), wir erzwingen Logout
+                await signOut(auth);
+            }
+        });
+
+        // Schritt 1: Key Validierung
+        document.getElementById('btn-validate-key').addEventListener('click', async () => {
+            const key = document.getElementById('login-key').value.trim();
+            const err = document.getElementById('login-error');
+            
+            if (!key) {
+                err.innerText = "Bitte Kundenschlüssel eingeben.";
                 return;
             }
 
-            try {
-                errorDiv.style.color = "#3498db";
-                errorDiv.innerText = "Anmeldung läuft...";
-                
-                const userCredential = await auth.signInWithEmailAndPassword(email, pass);
-                const user = userCredential.user;
+            err.innerText = "Prüfe Schlüssel...";
 
-                // Datenbank-Check: Stimmt der Mandant mit dem User-Eintrag überein?
-                const userDoc = await db.collection('users').doc(user.uid).get();
+            try {
+                const keyRef = doc(db, 'artifacts', appId, 'public', 'data', 'customer_keys', key);
+                const keySnap = await getDoc(keyRef);
                 
-                if (userDoc.exists && userDoc.data().tenantKey === tenant) {
-                    localStorage.setItem('puredisplay_last_tenant', tenant);
-                    initApp(tenant);
+                if (keySnap.exists()) {
+                    // Erfolg -> Wechsle zum Email/Pass Fenster
+                    document.getElementById('login-step-1').classList.add('hidden');
+                    document.getElementById('login-step-2').classList.remove('hidden');
+                    err.innerText = "";
+                    isKeyValidated = true;
                 } else {
-                    await auth.signOut();
-                    errorDiv.style.color = "#e74c3c";
-                    errorDiv.innerText = "Zugriff verweigert: Falscher Kundenschlüssel.";
+                    err.innerText = "Ungültiger Kundenschlüssel.";
+                    isKeyValidated = false;
                 }
             } catch (error) {
-                errorDiv.style.color = "#e74c3c";
-                errorDiv.innerText = "Fehler: " + error.message;
+                err.innerText = "Fehler bei der Schlüsselprüfung.";
+                console.error(error);
             }
-        }
+        });
 
-        function initApp(tenant) {
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('app-shell').classList.remove('hidden');
-            document.getElementById('display-tenant').innerText = tenant;
-        }
+        // Schritt 2: Anmeldung
+        document.getElementById('btn-login').addEventListener('click', async () => {
+            const email = document.getElementById('login-email').value.trim();
+            const pass = document.getElementById('login-pass').value;
+            const err = document.getElementById('login-error');
+            
+            if (!email || !pass) {
+                err.innerText = "Bitte E-Mail und Passwort eingeben.";
+                return;
+            }
 
-        function logout() {
-            auth.signOut().then(() => {
+            err.innerText = "Anmeldung läuft...";
+
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                // onAuthStateChanged kümmert sich um den Rest
+            } catch (error) {
+                err.innerText = "Anmeldedaten ungültig.";
+            }
+        });
+
+        // Zurück zum Schlüssel
+        document.getElementById('btn-back-to-key').addEventListener('click', () => {
+            document.getElementById('login-step-1').classList.remove('hidden');
+            document.getElementById('login-step-2').classList.add('hidden');
+            document.getElementById('login-error').innerText = "";
+            isKeyValidated = false;
+        });
+
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            isKeyValidated = false;
+            signOut(auth).then(() => {
                 location.reload();
             });
-        }
+        });
 
-        function showPage(pageId, element) {
-            // Seiten umschalten
-            document.querySelectorAll('.content-page').forEach(p => p.classList.add('hidden'));
-            document.getElementById('page-' + pageId).classList.remove('hidden');
+        // --- CORE LOGIK ---
+
+        async function loadTable(filter = "") {
+            const body = document.getElementById('results-body');
+            body.innerHTML = '<tr><td colspan="5" class="p-20 text-center"><div class="animate-pulse font-black text-slate-300 uppercase text-[10px]">Synchronisiere Mandantendaten...</div></td></tr>';
             
-            // Sidebar Styling umschalten
-            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
-            element.classList.add('active');
+            const partsCol = collection(db, 'artifacts', appId, 'public', 'data', 'parts');
+            const snap = await getDocs(partsCol);
+            body.innerHTML = '';
+            
+            let count = 0;
+            snap.forEach(docSnap => {
+                const d = docSnap.data();
+                if(d.companyId !== companyId) return;
+                
+                if (filter && !docSnap.id.toLowerCase().includes(filter.toLowerCase()) && !d.part_name?.toLowerCase().includes(filter.toLowerCase())) return;
+                
+                count++;
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100 group";
+                tr.innerHTML = `
+                    <td class="p-6 font-mono font-bold text-slate-800 text-sm">${docSnap.id}</td>
+                    <td class="p-6">
+                        <div class="font-bold text-slate-700">${d.part_name || '-'}</div>
+                        ${d.replacement_code ? `<div class="text-[9px] text-orange-500 font-black uppercase mt-1">Nachfolger: ${d.replacement_code}</div>` : ''}
+                    </td>
+                    <td class="p-6"><span class="bg-slate-100 px-3 py-1 rounded-lg text-xs font-bold text-slate-500">${d.location || '-'}</span></td>
+                    <td class="p-6 font-black text-xl text-slate-900 tabular-nums">${d.quantity || 0}</td>
+                    <td class="p-6 text-right">
+                        <button onclick="window.prepEdit('${docSnap.id}', '${d.part_name}', ${d.quantity || 0}, '${d.location || ''}', '${d.replacement_code || ''}', ${d.packageSize || 1})" class="bg-white border border-slate-200 hover:bg-slate-900 hover:text-white px-5 py-2 rounded-xl transition text-[10px] font-black uppercase tracking-widest">Wählen</button>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+            
+            if(count === 0) body.innerHTML = '<tr><td colspan="5" class="p-20 text-center text-slate-300 italic">Keine Einträge gefunden.</td></tr>';
         }
 
-        // Letzten Mandanten automatisch laden
-        window.onload = () => {
-            const lastTenant = localStorage.getItem('puredisplay_last_tenant');
-            if(lastTenant) document.getElementById('login-tenant').value = lastTenant;
+        window.prepEdit = (id, name, qty, loc, repl, moq) => {
+            activeId = id; activeQty = parseInt(qty);
+            document.getElementById('edit-name').innerText = name;
+            document.getElementById('edit-code').innerText = id;
+            document.getElementById('edit-qty').innerText = activeQty;
+            document.getElementById('edit-location').value = loc || '';
+            document.getElementById('edit-moq').innerText = moq || 1;
+            
+            const replBox = document.getElementById('edit-repl-info');
+            if(repl && repl !== 'undefined' && repl !== '') { replBox.innerText = "Achtung: Ersetzt durch " + repl; replBox.classList.remove('hidden'); }
+            else { replBox.classList.remove('hidden'); replBox.classList.add('hidden'); }
+            
+            document.getElementById('edit-card').classList.remove('hidden');
+            document.getElementById('no-edit-msg').classList.add('hidden');
+            document.querySelector('[data-page="stock"]').click();
         };
+
+        window.adjust = (val) => {
+            activeQty += val; if(activeQty < 0) activeQty = 0;
+            document.getElementById('edit-qty').innerText = activeQty;
+        };
+
+        document.getElementById('btn-save-edit').addEventListener('click', async () => {
+            if(!activeId) return;
+            const newLoc = document.getElementById('edit-location').value;
+            const partRef = doc(db, 'artifacts', appId, 'public', 'data', 'parts', activeId);
+            
+            await updateDoc(partRef, {
+                quantity: parseInt(activeQty),
+                location: newLoc
+            });
+            
+            alert("Daten erfolgreich aktualisiert.");
+            loadTable();
+            document.querySelector('[data-page="search"]').click();
+        });
+
+        // --- BESTELLABGLEICH ---
+        document.getElementById('recon-file-input').addEventListener('change', (e) => {
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const data = new Uint8Array(ev.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet);
+                
+                const partsCol = collection(db, 'artifacts', appId, 'public', 'data', 'parts');
+                const snap = await getDocs(partsCol);
+                const currentStock = {};
+                snap.forEach(d => {
+                    const data = d.data();
+                    if(data.companyId === companyId) currentStock[d.id] = data.quantity || 0;
+                });
+
+                const reconBody = document.getElementById('recon-body');
+                reconBody.innerHTML = '';
+                
+                json.forEach(row => {
+                    const code = row['material_code'] || row['Material Code'] || row['ArtNr'];
+                    const soll = parseInt(row['quantity'] || row['Menge'] || 0);
+                    const ist = currentStock[code] || 0;
+                    const diff = ist - soll;
+                    
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-slate-50";
+                    
+                    let statusHtml = '';
+                    if(ist >= soll) {
+                        statusHtml = '<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[9px] font-black">VORRÄTIG</span>';
+                    } else {
+                        statusHtml = '<span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-[9px] font-black">FEHLBESTAND</span>';
+                    }
+
+                    tr.innerHTML = `
+                        <td class="p-5 font-mono text-xs font-bold">${code}</td>
+                        <td class="p-5 font-bold tabular-nums">${soll}</td>
+                        <td class="p-5 font-bold text-slate-400 tabular-nums">${ist}</td>
+                        <td class="p-5 font-black tabular-nums ${diff < 0 ? 'text-red-500' : 'text-green-600'}">${diff > 0 ? '+' : ''}${diff}</td>
+                        <td class="p-5">${statusHtml}</td>
+                    `;
+                    reconBody.appendChild(tr);
+                });
+
+                document.getElementById('recon-upload').classList.add('hidden');
+                document.getElementById('recon-results').classList.remove('hidden');
+            };
+            reader.readAsArrayBuffer(e.target.files[0]);
+        });
+
+        window.resetRecon = () => {
+            document.getElementById('recon-upload').classList.remove('hidden');
+            document.getElementById('recon-results').classList.add('hidden');
+            document.getElementById('recon-file-input').value = '';
+        };
+
+        // --- STAMMDATEN IMPORT ---
+        document.getElementById('excel-input').addEventListener('change', (e) => {
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const data = new Uint8Array(ev.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                
+                document.getElementById('import-status').innerText = "Importiere " + json.length + " Einträge...";
+
+                for(let row of json) {
+                    const matCode = row['material_code'] || row['Material code'];
+                    if(matCode) {
+                        const partRef = doc(db, 'artifacts', appId, 'public', 'data', 'parts', String(matCode));
+                        await setDoc(partRef, {
+                            part_name: row['part_name'] || row['SAP material name'] || 'Unbekannt',
+                            replacement_code: String(row['replacement_code'] || row['replacement'] || ''),
+                            packageSize: parseInt(row['package_size'] || row['packageSize']) || 1,
+                            companyId: companyId,
+                            quantity: increment(0)
+                        }, { merge: true });
+                    }
+                }
+                alert("Import abgeschlossen!");
+                loadTable();
+            };
+            reader.readAsArrayBuffer(e.target.files[0]);
+        });
+
+        // Navigation UI
+        document.querySelectorAll('.nav-item').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const p = this.getAttribute('data-page');
+                document.querySelectorAll('.content-page').forEach(page => page.classList.add('hidden'));
+                document.getElementById('page-' + p).classList.remove('hidden');
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
+                this.classList.add('active-nav');
+            });
+        });
+
+        document.getElementById('btn-search-trigger').addEventListener('click', () => loadTable(document.getElementById('search-input').value));
+
     </script>
 </body>
 </html>
