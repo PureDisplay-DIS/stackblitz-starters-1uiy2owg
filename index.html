@@ -8,7 +8,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     
     <style>
         :root {
@@ -19,241 +18,173 @@
             --bg-color: #f4f7f6;
         }
 
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg-color); height: 100vh; overflow: hidden; }
-        .hidden { display: none !important; }
-
-        /* LOGIN SCREEN */
-        #auth-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #2c3e50; display: flex; align-items: center; justify-content: center; z-index: 9999;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg-color);
         }
-        .login-card {
-            background: white; padding: 40px; border-radius: 12px; width: 350px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center;
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
         }
-        .login-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
-        .login-card button { width: 100%; padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        
-        /* APP LAYOUT */
-        #app-shell { display: flex; height: 100vh; width: 100%; }
-        
-        .sidebar { width: var(--sidebar-width); background: var(--primary-color); color: var(--text-light); display: flex; flex-direction: column; }
-        .sidebar h2 { padding: 25px 20px; text-align: center; color: var(--accent-color); margin: 0; border-bottom: 1px solid #34495e; }
-        
-        .menu-label { padding: 20px 25px 5px; font-size: 0.7rem; text-transform: uppercase; color: #7f8c8d; }
-        .menu-item { padding: 12px 25px; cursor: pointer; border-left: 4px solid transparent; transition: 0.2s; color: #bdc3c7; }
-        .menu-item:hover { background: #34495e; color: white; }
-        .menu-item.active { background: #34495e; border-left-color: var(--accent-color); color: white; }
 
-        .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; }
-        .content-page { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); min-height: 400px; }
+        .sidebar h2 {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: var(--accent-color);
+        }
 
-        /* Custom Styles for Search & Admin */
-        #import-status { margin-top: 20px; font-family: monospace; font-size: 0.85rem; max-height: 200px; overflow-y: auto; background: #eee; padding: 10px; border-radius: 4px; }
-        .search-card { margin-top: 20px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; }
+        .menu-group {
+            margin-bottom: 25px;
+        }
+
+        .menu-label {
+            padding: 0 20px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #95a5a6;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .menu-item:hover {
+            background-color: #34495e;
+        }
+
+        .menu-item.active {
+            background-color: var(--accent-color);
+            border-left: 4px solid #fff;
+        }
+
+        /* Hauptbereich */
+        .main-content {
+            flex-grow: 1;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        /* Hilfsklassen */
+        .hidden { display: none; }
+
+        #system-footer {
+            margin-top: auto;
+            padding: 20px;
+            font-size: 0.8rem;
+            border-top: 1px solid #3e4f5f;
+        }
     </style>
 </head>
 <body>
 
-    <div id="auth-screen">
-        <div class="login-card">
-            <h2 style="color: #3498db; margin: 0;">PureDisplay</h2>
-            <p style="margin-bottom: 25px; color: #7f8c8d;">Parts Importer & Inventory</p>
-            
-            <input type="text" id="login-tenant" placeholder="Kundenschlüssel (z.B. HRF)">
-            <input type="email" id="login-email" placeholder="E-Mail">
-            <input type="password" id="login-pass" placeholder="Passwort">
-            
-            <button onclick="handleLogin()">Einloggen</button>
-            <p id="error-msg" style="color: #e74c3c; font-size: 0.85rem; margin-top: 15px;"></p>
-        </div>
-    </div>
+    <nav class="sidebar">
+        <h2>PureDisplay Parts</h2>
 
-    <div id="app-shell" class="hidden">
-        <nav class="sidebar">
-            <h2 id="display-tenant">PureDisplay</h2>
-            
+        <div class="menu-group">
             <span class="menu-label">Teileinformationen</span>
-            <div id="menu-search" class="menu-item active" onclick="showPage('search', this)">Suche</div>
+            <div class="menu-item active" onclick="showPage('search')">Suche</div>
+        </div>
 
+        <div class="menu-group">
             <span class="menu-label">Lagerverwaltung</span>
-            <div id="menu-stock" class="menu-item" onclick="showPage('stock', this)">Bestand ein/ausbuchen</div>
-            <div id="menu-order" class="menu-item" onclick="showPage('order', this)">Bestandsabgleich</div>
+            <div class="menu-item" onclick="showPage('stock-in')">Bestand einbuchen</div>
+            <div class="menu-item" onclick="showPage('stock-adjust')">Bestand anpassen</div>
+        </div>
 
+        <div class="menu-group">
+            <span class="menu-label">Bestellungen</span>
+            <div class="menu-item" onclick="showPage('order-check')">Bestandsabgleich</div>
+        </div>
+
+        <div class="menu-group">
             <span class="menu-label">Administration</span>
-            <div id="menu-admin" class="menu-item" onclick="showPage('admin', this)">Stammdaten-Update</div>
-            
-            <div style="margin-top: auto; padding: 20px; border-top: 1px solid #34495e;">
-                <p style="font-size: 0.7rem; color: #7f8c8d; margin-bottom: 10px;">Build: 2026.04.14-Alpha</p>
-                <button onclick="logout()" style="width:100%; background: #c0392b; color: white; border:none; padding: 8px; border-radius: 4px; cursor:pointer;">Abmelden</button>
-            </div>
-        </nav>
+            <div class="menu-item" onclick="showPage('admin-update')">Stammdaten-Update</div>
+        </div>
 
-        <main class="main-content">
-            <div id="page-search" class="content-page">
-                <h1>Teilesuche</h1>
-                <hr>
-                <div style="margin-top: 20px;">
-                    <input type="text" id="search-input" placeholder="Teilenummer eingeben..." style="padding: 10px; width: 250px;">
-                    <button onclick="searchPart()" style="padding: 10px 20px; background: var(--accent-color); color: white; border: none; cursor: pointer;">Suchen</button>
-                </div>
-                <div id="search-result-container"></div>
-            </div>
+        <div id="system-footer">
+            <div class="menu-item" onclick="showPage('settings')">⚙️ Einstellungen</div>
+            <p>v1.0.0 Alpha</p>
+            <p onclick="showPage('legal')" style="cursor:pointer; text-decoration: underline;">Rechtliche Informationen</p>
+        </div>
+    </nav>
 
-            <div id="page-stock" class="content-page hidden">
-                <h1>Lagerverwaltung</h1>
-                <p>Mengen für geladene Teile anpassen...</p>
-            </div>
-            
-            <div id="page-order" class="content-page hidden">
-                <h1>Bestandsabgleich</h1>
-                <p>Bestelldatei gegen Live-Bestand prüfen.</p>
-            </div>
+    <main class="main-content">
+        
+        <div id="page-search" class="content-page card">
+            <h1>Teilesuche</h1>
+            <p>Geben Sie eine Teilenummer ein oder scannen Sie den Barcode.</p>
+            <input type="text" placeholder="Material Code...">
+            <button>Suchen</button>
+        </div>
 
-            <div id="page-admin" class="content-page hidden">
-                <h1>Stammdaten-Update</h1>
-                <p>Importieren Sie den Teilekatalog ohne Lagerbestände zu überschreiben.</p>
-                <hr>
-                <div style="margin: 30px 0; padding: 20px; border: 2px dashed #3498db; border-radius: 8px; text-align: center;">
-                    <input type="file" id="csv-upload" accept=".csv" style="margin-bottom: 20px;">
-                    <br>
-                    <button onclick="processCSV()" style="padding: 12px 25px; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                        Import starten
-                    </button>
-                </div>
-                <div id="import-status" class="hidden"></div>
-            </div>
-        </main>
-    </div>
+        <div id="page-settings" class="content-page card hidden">
+            <h1>Einstellungen</h1>
+            <label>Kundenschlüssel (Tenant Key):</label>
+            <input type="text" id="tenant-key" placeholder="z.B. HRF-2026">
+            <p><small>Dieser Schlüssel wird lokal in Ihrem Browser gespeichert.</small></p>
+            <button onclick="saveSettings()">Speichern</button>
+        </div>
+
+        <div id="page-legal" class="content-page card hidden">
+            <h1>Rechtliche Informationen</h1>
+            <p>© 2026 PureDisplay. Alle Rechte vorbehalten.</p>
+        </div>
+
+    </main>
 
     <script>
-        // --- KONFIGURATION ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyDWXj3UpPlqvIZx80VqE7JPGSTqJgRY-0E",
-            authDomain: "puredisplay-66e76.firebaseapp.com",
-            projectId: "puredisplay-66e76",
-            storageBucket: "puredisplay-66e76.firebasestorage.app",
-            messagingSenderId: "204186912930",
-            appId: "1:204186912930:web:5622e19fd3beb463aceffb"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        // --- AUTH LOGIK ---
-        async function handleLogin() {
-            const tenant = document.getElementById('login-tenant').value.trim();
-            const email = document.getElementById('login-email').value.trim();
-            const pass = document.getElementById('login-pass').value;
-            const errorDiv = document.getElementById('error-msg');
-
-            try {
-                const userCredential = await auth.signInWithEmailAndPassword(email, pass);
-                const userDoc = await db.collection('users').doc(userCredential.user.uid).get();
-                
-                if (userDoc.exists && userDoc.data().tenantKey === tenant) {
-                    localStorage.setItem('puredisplay_last_tenant', tenant);
-                    initApp(tenant);
-                } else {
-                    await auth.signOut();
-                    errorDiv.innerText = "Falscher Kundenschlüssel.";
-                }
-            } catch (error) {
-                errorDiv.innerText = "Fehler: " + error.message;
-            }
-        }
-
-        function initApp(tenant) {
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('app-shell').classList.remove('hidden');
-            document.getElementById('display-tenant').innerText = tenant;
-        }
-
-        function logout() {
-            auth.signOut().then(() => location.reload());
-        }
-
-        // --- NAVIGATION ---
-        function showPage(pageId, element) {
+        // Navigation Logik
+        function showPage(pageId) {
+            // Alle Seiten verstecken
             document.querySelectorAll('.content-page').forEach(p => p.classList.add('hidden'));
-            document.getElementById('page-' + pageId).classList.remove('hidden');
+            // Alle Menüpunkte deaktivieren
             document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
-            if(element) element.classList.add('active');
-        }
-
-        // --- SUCHE ---
-        async function searchPart() {
-            const code = document.getElementById('search-input').value.trim();
-            const tenant = localStorage.getItem('puredisplay_last_tenant');
-            const container = document.getElementById('search-result-container');
-
-            if (!code) return;
-
-            try {
-                const doc = await db.collection('tenants').doc(tenant).collection('inventory').doc(code).get();
-                if (doc.exists) {
-                    const data = doc.data();
-                    const stock = data.stock || 0;
-                    
-                    let replaceUI = "";
-                    if (stock <= 0 && data.new_part_code) {
-                        replaceUI = `
-                            <div style="background: #fff3cd; padding: 10px; margin-top: 10px; border: 1px solid #ffeeba;">
-                                ⚠️ Bestand 0. Nachfolger: <strong>${data.new_part_code}</strong><br>
-                                <button onclick="document.getElementById('search-input').value='${data.new_part_code}'; searchPart();">Zu Nachfolger wechseln</button>
-                            </div>`;
-                    }
-
-                    container.innerHTML = `
-                        <div class="search-card">
-                            <h3>${code}</h3>
-                            <p><strong>Name:</strong> ${data.name}</p>
-                            <p><strong>Lagerort:</strong> <span style="color:blue">${data.location || 'Nicht zugewiesen'}</span></p>
-                            <p><strong>Bestand:</strong> <span style="font-size:1.2rem; font-weight:bold;">${stock}</span></p>
-                            ${replaceUI}
-                        </div>`;
-                } else {
-                    container.innerHTML = `<p style="color:red; margin-top:20px;">Teil nicht gefunden.</p>`;
-                }
-            } catch (e) { alert("Suche fehlgeschlagen."); }
-        }
-
-        // --- STAMMDATEN IMPORT ---
-        async function processCSV() {
-            const fileInput = document.getElementById('csv-upload');
-            const statusDiv = document.getElementById('import-status');
-            const tenant = localStorage.getItem('puredisplay_last_tenant');
             
-            if (!fileInput.files[0]) return alert("Datei wählen!");
-
-            statusDiv.classList.remove('hidden');
-            statusDiv.innerHTML = "Import läuft...";
-            
-            Papa.parse(fileInput.files[0], {
-                header: true,
-                skipEmptyLines: true,
-                complete: async function(results) {
-                    let count = 0;
-                    for (let row of results.data) {
-                        const code = row.material_code ? row.material_code.trim() : null;
-                        if (code) {
-                            await db.collection('tenants').doc(tenant).collection('inventory').doc(code).set({
-                                name: row.part_name || "Unbekannt",
-                                new_part_code: row.replacement_code || "",
-                                min_packing: parseInt(row.package_size) || 1
-                            }, { merge: true });
-                            count++;
-                        }
-                    }
-                    statusDiv.innerHTML = `✅ Fertig! ${count} Teile verarbeitet/aktualisiert.`;
-                }
-            });
+            // Zielseite zeigen
+            const target = document.getElementById('page-' + pageId);
+            if(target) target.classList.remove('hidden');
         }
 
-        window.onload = () => {
-            const lastTenant = localStorage.getItem('puredisplay_last_tenant');
-            if(lastTenant) document.getElementById('login-tenant').value = lastTenant;
+        // Einstellungen im LocalStorage speichern
+        function saveSettings() {
+            const key = document.getElementById('tenant-key').value;
+            localStorage.setItem('puredisplay_tenant_key', key);
+            alert("Kundenschlüssel gespeichert!");
+        }
+
+        // Beim Laden prüfen, ob Schlüssel vorhanden
+        window.onload = function() {
+            const savedKey = localStorage.getItem('puredisplay_tenant_key');
+            if(savedKey) {
+                document.getElementById('tenant-key').value = savedKey;
+            } else {
+                showPage('settings'); // Zwinge User zu den Einstellungen
+            }
         };
     </script>
 </body>
